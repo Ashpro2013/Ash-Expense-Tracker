@@ -1,0 +1,24 @@
+.appbar {
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    backdrop-filter: blur(14px);
+}
+
+.app-title {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.drawer {
+    background: linear-gradient(160deg, #0f172a 0%, #1e293b 60%, #111827 100%);
+    color: #e2e8f0;
+}
+
+.main-content {
+    padding: 32px 24px 48px;
+}
+
+@media (max-width: 960px) {
+    .main-content {
+        padding: 24px 16px 40px;
+    }
+}

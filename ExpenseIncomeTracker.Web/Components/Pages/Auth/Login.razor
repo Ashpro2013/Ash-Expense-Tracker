@@ -1,0 +1,151 @@
+@page "/login"
+@attribute [AllowAnonymous]
+@rendermode InteractiveServer
+@layout ExpenseIncomeTracker.Web.Components.Layout.AuthLayout
+
+<PageTitle>Sign in</PageTitle>
+
+@using System.Text.Json.Serialization
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<MudPaper Elevation="0" Class="auth-card">
+
+    <MudText Typo="Typo.h4" Class="auth-title">
+        Welcome back
+    </MudText>
+
+    <MudText Typo="Typo.subtitle1" Class="auth-subtitle">
+        Sign in to manage your finances.
+    </MudText>
+
+    <!-- LOGIN FORM -->
+    <MudForm @ref="_form">
+
+        <!-- EMAIL -->
+        <MudTextField T="string"
+                      @bind-Value="_model.Email"
+                      Label="Email"
+                      Variant="Variant.Outlined"
+                      FullWidth="true"
+                      Required="true"
+                      RequiredError="Email is required"
+                      Immediate="true" />
+
+        <!-- PASSWORD -->
+        <MudTextField T="string"
+                      @bind-Value="_model.Password"
+                      Label="Password"
+                      Variant="Variant.Outlined"
+                      InputType="InputType.Password"
+                      FullWidth="true"
+                      Required="true"
+                      RequiredError="Password is required"
+                      Immediate="true" />
+
+        <!-- REMEMBER ME -->
+        <MudCheckBox T="bool" @bind-Value="_model.RememberMe"
+                     Label="Remember me"
+                     Class="mt-2" />
+
+        <!-- ERROR MESSAGE -->
+        @if (!string.IsNullOrWhiteSpace(Error))
+        {
+            <MudAlert Severity="Severity.Error"
+                      Variant="Variant.Outlined"
+                      Class="mt-3">
+                @Error
+            </MudAlert>
+        }
+
+        <!-- SUBMIT -->
+        <MudButton ButtonType="ButtonType.Button"
+                   Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   FullWidth="true"
+                   Class="mt-4"
+                   Disabled="@_submitting"
+                   OnClick="SubmitLogin">
+            <span>Sign in</span>
+        </MudButton>
+    </MudForm>
+
+    <!-- FOOTER -->
+    <MudText Typo="Typo.body2" Class="auth-footer">
+        New here?
+        <MudLink Href="/register">Create an account</MudLink>
+    </MudText>
+
+</MudPaper>
+
+
+@code
+{
+    private MudForm? _form;
+    private LoginModel _model = new();
+    private bool _submitting;
+
+
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrl { get; set; }
+
+    [SupplyParameterFromQuery(Name = "error")]
+    public string? Error { get; set; }
+
+    private async Task SubmitLogin()
+    {
+        if (_form is null)
+        {
+            return;
+        }
+
+        await _form.Validate();
+        if (!_form.IsValid)
+        {
+            return;
+        }
+
+        _submitting = true;
+        Error = null;
+
+        var response = await JS.InvokeAsync<AuthResponse>(
+            "authForms.postJson",
+            "/account/login-json",
+            new LoginRequest(_model.Email, _model.Password, _model.RememberMe, ReturnUrl));
+
+        if (response.Ok)
+        {
+            Navigation.NavigateTo(response.Redirect ?? "/dashboard", true);
+            return;
+        }
+
+        Error = response.Error ?? "Login failed.";
+        _submitting = false;
+    }
+
+    // ==========================
+    // MODEL
+    // ==========================
+    private sealed class LoginModel
+    {
+        public string Email { get; set; } = string.Empty;
+
+        public string Password { get; set; } = string.Empty;
+
+        public bool RememberMe { get; set; }
+    }
+
+    private sealed record LoginRequest(string Email, string Password, bool RememberMe, string? ReturnUrl);
+
+    private sealed class AuthResponse
+    {
+        [JsonPropertyName("ok")]
+        public bool Ok { get; set; }
+
+        [JsonPropertyName("redirect")]
+        public string? Redirect { get; set; }
+
+        [JsonPropertyName("error")]
+        public string? Error { get; set; }
+    }
+}

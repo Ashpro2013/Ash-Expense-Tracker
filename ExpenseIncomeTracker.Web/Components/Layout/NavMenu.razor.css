@@ -1,0 +1,36 @@
+.brand {
+    padding: 28px 24px 18px;
+}
+
+.brand-title {
+    color: #f8fafc;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+}
+
+.brand-subtitle {
+    color: rgba(226, 232, 240, 0.75);
+}
+
+.nav-menu {
+    padding: 0 16px 24px;
+}
+
+.nav-menu ::deep .mud-nav-link {
+    color: #e2e8f0;
+    border-radius: 12px;
+    margin-bottom: 6px;
+}
+
+.nav-menu ::deep .mud-nav-link:hover {
+    background: rgba(148, 163, 184, 0.2);
+}
+
+.nav-menu ::deep .mud-nav-link.active {
+    background: rgba(56, 189, 248, 0.18);
+    color: #e0f2fe;
+}
+
+.nav-menu ::deep .mud-nav-group {
+    color: #e2e8f0;
+}

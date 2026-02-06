@@ -1,0 +1,39 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "ExpenseIncomeTracker.Application/1.0.0": {
+        "dependencies": {
+          "ExpenseIncomeTracker.Domain": "1.0.0"
+        },
+        "runtime": {
+          "ExpenseIncomeTracker.Application.dll": {}
+        }
+      },
+      "ExpenseIncomeTracker.Domain/1.0.0": {
+        "runtime": {
+          "ExpenseIncomeTracker.Domain.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "ExpenseIncomeTracker.Application/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "ExpenseIncomeTracker.Domain/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

@@ -1,0 +1,102 @@
+@page "/register"
+@attribute [AllowAnonymous]
+@rendermode InteractiveServer
+@layout ExpenseIncomeTracker.Web.Components.Layout.AuthLayout
+
+<PageTitle>Sign up</PageTitle>
+
+@using System.Text.Json.Serialization
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<MudPaper Elevation="0" Class="auth-card">
+    <MudText Typo="Typo.h4" Class="auth-title">Create your account</MudText>
+    <MudText Typo="Typo.subtitle1" Class="auth-subtitle">Start tracking income and expenses in minutes.</MudText>
+
+    <MudForm @ref="_form">
+        <MudTextField T="string" @bind-Value="_model.Email" Label="Email" Variant="Variant.Outlined" FullWidth="true" Required="true"
+                      RequiredError="Email is required" Immediate="true" />
+        <MudTextField T="string" @bind-Value="_model.Password" Label="Password" Variant="Variant.Outlined" InputType="InputType.Password" FullWidth="true"
+                      Required="true" RequiredError="Password is required" Immediate="true" />
+        <MudTextField T="string" @bind-Value="_model.ConfirmPassword" Label="Confirm Password" Variant="Variant.Outlined" InputType="InputType.Password" FullWidth="true"
+                      Required="true" RequiredError="Confirm password is required" Immediate="true" />
+
+
+        @if (!string.IsNullOrWhiteSpace(Error))
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mt-3">
+                @Error
+            </MudAlert>
+        }
+
+        <MudButton ButtonType="ButtonType.Button" Color="Color.Secondary" Variant="Variant.Filled" FullWidth="true" Class="mt-4" Disabled="@_submitting" OnClick="SubmitRegister">
+            Sign up
+        </MudButton>
+    </MudForm>
+
+    <MudText Typo="Typo.body2" Class="auth-footer">
+        Already registered? <MudLink Href="/login">Sign in</MudLink>
+    </MudText>
+</MudPaper>
+
+@code {
+    private MudForm? _form;
+    private RegisterModel _model = new();
+    private bool _submitting;
+
+
+    [SupplyParameterFromQuery(Name = "error")]
+    public string? Error { get; set; }
+
+    private async Task SubmitRegister()
+    {
+        if (_form is null)
+        {
+            return;
+        }
+
+        await _form.Validate();
+        if (!_form.IsValid)
+        {
+            return;
+        }
+
+        _submitting = true;
+        Error = null;
+
+        var response = await JS.InvokeAsync<AuthResponse>(
+            "authForms.postJson",
+            "/account/register-json",
+            new RegisterRequest(_model.Email, _model.Password, _model.ConfirmPassword));
+
+        if (response.Ok)
+        {
+            Navigation.NavigateTo(response.Redirect ?? "/dashboard", true);
+            return;
+        }
+
+        Error = response.Error ?? "Registration failed.";
+        _submitting = false;
+    }
+
+    private sealed class RegisterModel
+    {
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+
+    private sealed record RegisterRequest(string Email, string Password, string ConfirmPassword);
+
+    private sealed class AuthResponse
+    {
+        [JsonPropertyName("ok")]
+        public bool Ok { get; set; }
+
+        [JsonPropertyName("redirect")]
+        public string? Redirect { get; set; }
+
+        [JsonPropertyName("error")]
+        public string? Error { get; set; }
+    }
+}
