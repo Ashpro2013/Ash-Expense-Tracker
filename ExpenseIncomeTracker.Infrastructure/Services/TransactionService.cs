@@ -47,11 +47,19 @@ public class TransactionService : ITransactionService
         return transaction;
     }
 
-    public async Task UpdateAsync(Transaction transaction, CancellationToken cancellationToken = default)
-    {
-        _db.Transactions.Update(transaction);
-        await _db.SaveChangesAsync(cancellationToken);
-    }
+   public async Task UpdateAsync(Transaction transaction, CancellationToken cancellationToken = default)
+   {
+    var existing = await _db.Transactions
+                            .FirstOrDefaultAsync(t => t.Id == transaction.Id, cancellationToken);
+
+    if (existing == null)
+        return;
+
+    _db.Entry(existing).CurrentValues.SetValues(transaction);
+
+    await _db.SaveChangesAsync(cancellationToken);
+   }
+
 
     public async Task DeleteAsync(int id, string userId, CancellationToken cancellationToken = default)
     {
