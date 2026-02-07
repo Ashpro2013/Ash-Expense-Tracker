@@ -1,0 +1,89 @@
+﻿@page "/dashboard"
+@attribute [Authorize]
+
+<PageTitle>Dashboard</PageTitle>
+
+<div class="page-title">
+    <div>
+        <MudText Typo="Typo.h4">Dashboard</MudText>
+        <MudText Typo="Typo.subtitle2" Class="page-subtitle">Your financial snapshot for this month.</MudText>
+    </div>
+</div>
+
+<MudGrid>
+    <MudItem xs="12" md="4">
+        <MudPaper Class="stat-card" Style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);">
+            <MudText Typo="Typo.subtitle2" Class="stat-label">Income</MudText>
+            <MudText Typo="Typo.h4" Class="stat-value">@_incomeTotal.ToString("C")</MudText>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" md="4">
+        <MudPaper Class="stat-card" Style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);">
+            <MudText Typo="Typo.subtitle2" Class="stat-label">Expenses</MudText>
+            <MudText Typo="Typo.h4" Class="stat-value">@_expenseTotal.ToString("C")</MudText>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" md="4">
+        <MudPaper Class="stat-card" Style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);">
+            <MudText Typo="Typo.subtitle2" Class="stat-label">Balance</MudText>
+            <MudText Typo="Typo.h4" Class="stat-value">@_balance.ToString("C")</MudText>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+<MudPaper Class="pa-4" Style="margin-top: 24px;">
+    <MudText Typo="Typo.h6">Recent transactions</MudText>
+    <MudTable Items="_recentTransactions" Dense="true" Hover="true">
+        <HeaderContent>
+            <MudTh>Date</MudTh>
+            <MudTh>Category</MudTh>
+            <MudTh align="right">Amount</MudTh>
+            <MudTh>Note</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.TransactionDate.ToLocalTime().ToString("MMM dd")</MudTd>
+            <MudTd>@context.Category?.Name</MudTd>
+            <MudTd align="right">@context.Amount.ToString("C")</MudTd>
+            <MudTd>@context.Note</MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudText>No transactions yet.</MudText>
+        </NoRecordsContent>
+    </MudTable>
+</MudPaper>
+
+@code {
+    [Inject] private ITransactionService TransactionService { get; set; } = default!;
+    [Inject] private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+
+    private decimal _incomeTotal;
+    private decimal _expenseTotal;
+    private decimal _balance;
+    private List<Transaction> _recentTransactions = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var userId = await GetUserIdAsync();
+        var allTransactions = await TransactionService.GetAllAsync(userId);
+
+        var startOfMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+        var monthTransactions = allTransactions.Where(t => t.TransactionDate >= startOfMonth).ToList();
+
+        _incomeTotal = monthTransactions
+            .Where(t => t.Category?.Type == CategoryType.Income)
+            .Sum(t => t.Amount);
+
+        _expenseTotal = monthTransactions
+            .Where(t => t.Category?.Type == CategoryType.Expense)
+            .Sum(t => t.Amount);
+
+        _balance = _incomeTotal - _expenseTotal;
+        _recentTransactions = allTransactions.Take(6).ToList();
+    }
+
+    private async Task<string> GetUserIdAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        return authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+    }
+}

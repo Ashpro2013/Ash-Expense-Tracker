@@ -1,0 +1,206 @@
+@page "/transactions"
+@attribute [Authorize]
+
+<PageTitle>Transactions</PageTitle>
+
+<div class="page-title">
+    <div>
+        <MudText Typo="Typo.h4">Transactions</MudText>
+        <MudText Typo="Typo.subtitle2" Class="page-subtitle">Track every income and expense entry.</MudText>
+    </div>
+</div>
+
+<MudGrid>
+    <MudItem xs="12" lg="4">
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.h6">@(_form.Id == 0 ? "Add transaction" : "Edit transaction")</MudText>
+            <MudDivider Class="my-2" />
+
+            <EditForm Model="_form" OnValidSubmit="SaveTransaction" formname="transaction-form">
+                <DataAnnotationsValidator />
+                <MudDatePicker @bind-Date="_form.TransactionDate" Label="Date" Variant="Variant.Outlined" />
+                <MudNumericField @bind-Value="_form.Amount" Label="Amount" Variant="Variant.Outlined" FullWidth="true" Required="true" />
+                <MudSelect T="int" @bind-Value="_form.CategoryId" Label="Category" Variant="Variant.Outlined" FullWidth="true">
+                    @foreach (var category in _categories)
+                    {
+                        <MudSelectItem Value="@category.Id">@category.Name (@category.Type)</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudTextField @bind-Value="_form.Note" Label="Note" Variant="Variant.Outlined" FullWidth="true" Lines="3" />
+
+                @if (!string.IsNullOrWhiteSpace(_formError))
+                {
+                    <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mt-3">@_formError</MudAlert>
+                }
+
+                <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled" FullWidth="true" Class="mt-4">
+                    Save
+                </MudButton>
+                @if (_form.Id != 0)
+                {
+                    <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="ResetForm" FullWidth="true" Class="mt-2">
+                        Cancel edit
+                    </MudButton>
+                }
+            </EditForm>
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12" lg="8">
+        <MudPaper Class="pa-4">
+            <MudStack direction="Row" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="2">
+                <MudText Typo="Typo.h6">All entries</MudText>
+                <MudSelect T="string" @bind-Value="_filterChip" Variant="Variant.Outlined" Dense="true" Style="min-width: 160px;">
+                    <MudSelectItem Value="@("All")">All</MudSelectItem>
+                    <MudSelectItem Value="@("Income")">Income</MudSelectItem>
+                    <MudSelectItem Value="@("Expense")">Expense</MudSelectItem>
+                </MudSelect>
+            </MudStack>
+
+            <MudTable Items="_filteredTransactions" Dense="true" Hover="true" Class="mt-3">
+                <HeaderContent>
+                    <MudTh>Date</MudTh>
+                    <MudTh>Category</MudTh>
+                    <MudTh align="right">Amount</MudTh>
+                    <MudTh>Note</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.TransactionDate.ToLocalTime().ToString("MMM dd, yyyy")</MudTd>
+                    <MudTd>@context.Category?.Name (@context.Category?.Type)</MudTd>
+                    <MudTd align="right">@context.Amount.ToString("C")</MudTd>
+                    <MudTd>@context.Note</MudTd>
+                    <MudTd align="right">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="@(() => EditTransaction(context))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => DeleteTransaction(context.Id))" />
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText>No transactions yet.</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    [Inject] private ITransactionService TransactionService { get; set; } = default!;
+    [Inject] private ICategoryService CategoryService { get; set; } = default!;
+    [Inject] private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+
+    private string _userId = string.Empty;
+    private readonly List<Category> _categories = new();
+    private readonly List<Transaction> _transactions = new();
+    private TransactionForm _form = new();
+    private string _filterChip = "All";
+    private string? _formError;
+
+    private IEnumerable<Transaction> _filteredTransactions =>
+        _filterChip switch
+        {
+            "Income" => _transactions.Where(t => t.Category?.Type == CategoryType.Income),
+            "Expense" => _transactions.Where(t => t.Category?.Type == CategoryType.Expense),
+            _ => _transactions
+        };
+
+    protected override async Task OnInitializedAsync()
+    {
+        _userId = await GetUserIdAsync();
+        await LoadCategories();
+        await LoadTransactions();
+    }
+
+    private async Task LoadCategories()
+    {
+        _categories.Clear();
+        _categories.AddRange(await CategoryService.GetByTypeAsync(_userId, CategoryType.Income));
+        _categories.AddRange(await CategoryService.GetByTypeAsync(_userId, CategoryType.Expense));
+    }
+
+    private async Task LoadTransactions()
+    {
+        _transactions.Clear();
+        _transactions.AddRange(await TransactionService.GetAllAsync(_userId));
+    }
+
+    private async Task SaveTransaction()
+    {
+        _formError = null;
+        if (_form.CategoryId == 0)
+        {
+            _formError = "Please select a category.";
+            return;
+        }
+
+        if (_form.Id == 0)
+        {
+            await TransactionService.CreateAsync(new Transaction
+            {
+                Amount = _form.Amount,
+                CategoryId = _form.CategoryId,
+                Note = _form.Note,
+                TransactionDate = _form.TransactionDate ?? DateTime.Today,
+                UserId = _userId
+            });
+        }
+        else
+        {
+            await TransactionService.UpdateAsync(new Transaction
+            {
+                Id = _form.Id,
+                Amount = _form.Amount,
+                CategoryId = _form.CategoryId,
+                Note = _form.Note,
+                TransactionDate = _form.TransactionDate ?? DateTime.Today,
+                UserId = _userId
+            });
+        }
+
+        ResetForm();
+        await LoadTransactions();
+    }
+
+    private void EditTransaction(Transaction transaction)
+    {
+        _form = new TransactionForm
+        {
+            Id = transaction.Id,
+            Amount = transaction.Amount,
+            CategoryId = transaction.CategoryId,
+            Note = transaction.Note,
+            TransactionDate = transaction.TransactionDate.ToLocalTime()
+        };
+    }
+
+    private async Task DeleteTransaction(int id)
+    {
+        await TransactionService.DeleteAsync(id, _userId);
+        await LoadTransactions();
+    }
+
+    private void ResetForm()
+    {
+        _form = new TransactionForm();
+        _formError = null;
+    }
+
+    private async Task<string> GetUserIdAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        return authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+    }
+
+    private sealed class TransactionForm
+    {
+        public int Id { get; set; }
+
+        [Required]
+        public decimal Amount { get; set; }
+
+        public int CategoryId { get; set; }
+
+        public DateTime? TransactionDate { get; set; } = DateTime.Today;
+
+        public string? Note { get; set; }
+    }
+}
