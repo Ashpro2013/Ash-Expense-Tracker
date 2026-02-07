@@ -9,34 +9,82 @@
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
 
-<MudPaper Elevation="0" Class="auth-card">
-    <MudText Typo="Typo.h4" Class="auth-title">Create your account</MudText>
-    <MudText Typo="Typo.subtitle1" Class="auth-subtitle">Start tracking income and expenses in minutes.</MudText>
+<MudPaper Elevation="0" Style="padding: 2rem;">
 
-    <MudForm @ref="_form">
-        <MudTextField T="string" @bind-Value="_model.Email" Label="Email" Variant="Variant.Outlined" FullWidth="true" Required="true"
-                      RequiredError="Email is required" Immediate="true" />
-        <MudTextField T="string" @bind-Value="_model.Password" Label="Password" Variant="Variant.Outlined" InputType="InputType.Password" FullWidth="true"
-                      Required="true" RequiredError="Password is required" Immediate="true" />
-        <MudTextField T="string" @bind-Value="_model.ConfirmPassword" Label="Confirm Password" Variant="Variant.Outlined" InputType="InputType.Password" FullWidth="true"
-                      Required="true" RequiredError="Confirm password is required" Immediate="true" />
+    <MudStack Spacing="3">
+        <MudStack Spacing="1">
+            <MudText Typo="Typo.h4" Style="font-weight: 600;">
+                Create your account
+            </MudText>
+            <MudText Typo="Typo.subtitle1" Color="Color.Secondary">
+                Start tracking income and expenses in minutes.
+            </MudText>
+        </MudStack>
 
+        <!-- REGISTER FORM -->
+        <MudForm @ref="_form">
+            <MudStack Spacing="3">
+                <!-- EMAIL -->
+                <MudTextField T="string"
+                              @bind-Value="_model.Email"
+                              Label="Email"
+                              Variant="Variant.Outlined"
+                              FullWidth="true"
+                              Required="true"
+                              RequiredError="Email is required"
+                              Immediate="true" />
 
-        @if (!string.IsNullOrWhiteSpace(Error))
-        {
-            <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mt-3">
-                @Error
-            </MudAlert>
-        }
+                <!-- PASSWORD -->
+                <MudTextField T="string"
+                              @bind-Value="_model.Password"
+                              Label="Password"
+                              Variant="Variant.Outlined"
+                              InputType="InputType.Password"
+                              FullWidth="true"
+                              Required="true"
+                              RequiredError="Password is required"
+                              Immediate="true" />
 
-        <MudButton ButtonType="ButtonType.Button" Color="Color.Secondary" Variant="Variant.Filled" FullWidth="true" Class="mt-4" Disabled="@_submitting" OnClick="SubmitRegister">
-            Sign up
-        </MudButton>
-    </MudForm>
+                <!-- CONFIRM PASSWORD -->
+                <MudTextField T="string"
+                              @bind-Value="_model.ConfirmPassword"
+                              Label="Confirm Password"
+                              Variant="Variant.Outlined"
+                              InputType="InputType.Password"
+                              FullWidth="true"
+                              Required="true"
+                              RequiredError="Confirm password is required"
+                              Immediate="true" />
 
-    <MudText Typo="Typo.body2" Class="auth-footer">
-        Already registered? <MudLink Href="/login">Sign in</MudLink>
-    </MudText>
+                <!-- ERROR MESSAGE -->
+                @if (!string.IsNullOrWhiteSpace(Error))
+                {
+                    <MudAlert Severity="Severity.Error"
+                              Variant="Variant.Outlined">
+                        @Error
+                    </MudAlert>
+                }
+
+                <!-- SUBMIT -->
+                <MudButton ButtonType="ButtonType.Button"
+                           Color="Color.Secondary"
+                           Variant="Variant.Filled"
+                           FullWidth="true"
+                           Size="Size.Large"
+                           Disabled="@_submitting"
+                           OnClick="SubmitRegister">
+                    <span>Sign up</span>
+                </MudButton>
+            </MudStack>
+        </MudForm>
+
+        <!-- FOOTER -->
+        <MudText Typo="Typo.body2" Align="Align.Center" Color="Color.Secondary">
+            Already registered?
+            <MudLink Href="/login">Sign in</MudLink>
+        </MudText>
+    </MudStack>
+
 </MudPaper>
 
 @code {

@@ -4,24 +4,33 @@
 <MudDialogProvider />
 <MudSnackbarProvider />
 
-<div class="auth-shell">
-    <div class="auth-hero">
-        <div class="auth-hero-content">
-            <MudText Typo="Typo.h2" Class="hero-title">Make every riyal count.</MudText>
-            <MudText Typo="Typo.subtitle1" Class="hero-subtitle">
-                Track income, control expenses, and build a clear path to your goals.
-            </MudText>
-            <div class="hero-badges">
-                <MudChip T="string" Variant="Variant.Outlined" Color="Color.Secondary">Smart categories</MudChip>
-                <MudChip T="string" Variant="Variant.Outlined" Color="Color.Secondary">Monthly insights</MudChip>
-                <MudChip T="string" Variant="Variant.Outlined" Color="Color.Secondary">Secure access</MudChip>
-            </div>
-        </div>
-    </div>
-    <div class="auth-panel">
-        @Body
-    </div>
-</div>
+<MudContainer MaxWidth="MaxWidth.False" Style="min-height: 100vh; padding: 0;">
+    <MudGrid Spacing="0" Style="min-height: 100vh;">
+        <!-- LEFT PANEL: HERO SECTION -->
+        <MudItem xs="12" md="6" Style="display: flex; align-items: center; background: linear-gradient(135deg, var(--mud-palette-primary) 0%, var(--mud-palette-primary-darken) 100%);">
+            <MudContainer MaxWidth="MaxWidth.Small">
+                <MudText Typo="Typo.h2" Style="color: white; margin-bottom: 1rem; font-weight: 700;">
+                    Make every riyal count.
+                </MudText>
+                <MudText Typo="Typo.subtitle1" Style="color: rgba(255, 255, 255, 0.9); margin-bottom: 2rem;">
+                    Track income, control expenses, and build a clear path to your goals.
+                </MudText>
+                <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap">
+                    <MudChip T="string" Variant="Variant.Outlined" Color="Color.Secondary">Smart categories</MudChip>
+                    <MudChip T="string" Variant="Variant.Outlined" Color="Color.Secondary">Monthly insights</MudChip>
+                    <MudChip T="string" Variant="Variant.Outlined" Color="Color.Secondary">Secure access</MudChip>
+                </MudStack>
+            </MudContainer>
+        </MudItem>
+
+        <!-- RIGHT PANEL: AUTH FORM -->
+        <MudItem xs="12" md="6" Style="display: flex; align-items: center; justify-content: center;">
+            <MudContainer MaxWidth="MaxWidth.Small" Style="padding: 2rem;">
+                @Body
+            </MudContainer>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
 
 @code {
     private readonly MudTheme _theme = ExpenseIncomeTracker.Web.Theme.AppTheme.Create();
