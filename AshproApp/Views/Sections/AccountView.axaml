@@ -1,0 +1,47 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:AshproApp.ViewModels"
+             x:CompileBindings="False"
+             x:Class="AshproApp.Views.Sections.AccountView"
+             x:DataType="vm:MainWindowViewModel">
+  <Grid ColumnDefinitions="430,*" ColumnSpacing="12">
+    <Border Classes="surfaceCard">
+      <StackPanel Spacing="8">
+        <TextBlock Text="Account Settings" Classes="sectionTitle" />
+        <TextBlock Text="Change password" Classes="fieldLabel" />
+        <TextBlock Text="Use your current password, then set a new one." Classes="muted" />
+
+        <TextBlock Text="Current password" Classes="fieldLabel" />
+        <TextBox Text="{Binding CurrentPassword}" PasswordChar="●" Watermark="Current password" />
+
+        <TextBlock Text="New password" Classes="fieldLabel" />
+        <TextBox Text="{Binding NewPassword}" PasswordChar="●" Watermark="Minimum 6 characters" />
+
+        <TextBlock Text="Confirm new password" Classes="fieldLabel" />
+        <TextBox Text="{Binding ConfirmNewPassword}" PasswordChar="●" Watermark="Confirm new password" />
+
+        <TextBlock Text="{Binding PasswordChangeError}" Classes="error" />
+        <TextBlock Text="{Binding PasswordChangeInfo}" Foreground="#0F766E" />
+
+        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,6,0,0">
+          <Button Content="Update password" Classes="primaryAction" Command="{Binding ChangePasswordCommand}" />
+        </StackPanel>
+      </StackPanel>
+    </Border>
+
+    <Border Grid.Column="1" Classes="surfaceCard">
+      <StackPanel Spacing="10">
+        <TextBlock Text="Security Tips" Classes="sectionTitle" />
+        <TextBlock Text="Use a long password with letters, numbers, and symbols." Classes="muted" TextWrapping="Wrap" />
+        <TextBlock Text="Do not reuse passwords from other apps." Classes="muted" TextWrapping="Wrap" />
+        <TextBlock Text="Update your password periodically for better account security." Classes="muted" TextWrapping="Wrap" />
+        <Border Background="#EAF6F5" CornerRadius="12" Padding="12" Margin="0,8,0,0">
+          <StackPanel>
+            <TextBlock Text="Signed in as" Classes="muted" />
+            <TextBlock Text="{Binding CurrentUserEmail}" FontWeight="SemiBold" />
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </Border>
+  </Grid>
+</UserControl>

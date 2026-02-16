@@ -27,12 +27,14 @@ public partial class App : Application
             var dbContextFactory = new AppDbContextFactory();
             var authService = new AuthService(dbContextFactory);
             var rememberMeService = new RememberMeService();
+            var albumService = new AlbumService();
             var financeEntryService = new FinanceEntryService(dbContextFactory);
             var diaryEntryService = new DiaryEntryService(dbContextFactory);
             var activityItemService = new ActivityItemService(dbContextFactory);
             var viewModel = new MainWindowViewModel(
                 authService,
                 rememberMeService,
+                albumService,
                 financeEntryService,
                 diaryEntryService,
                 activityItemService);

@@ -180,6 +180,7 @@
             <ToggleButton Classes="navButton" Content="Expense" IsChecked="{Binding IsExpenseSelected, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="Expense" />
             <ToggleButton Classes="navButton" Content="Activity" IsChecked="{Binding IsActivitySelected, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="Activity" />
             <ToggleButton Classes="navButton" Content="Diary" IsChecked="{Binding IsDiarySelected, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="Diary" />
+            <ToggleButton Classes="navButton" Content="Albums" IsChecked="{Binding IsAlbumsSelected, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="Albums" />
             <ToggleButton Classes="navButton" Content="Account" IsChecked="{Binding IsAccountSelected, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="Account" />
           </StackPanel>
         </Border>
@@ -191,6 +192,7 @@
             <sections:ExpenseView IsVisible="{Binding ShowExpense}" />
             <sections:ActivityView IsVisible="{Binding ShowActivity}" />
             <sections:DiaryView IsVisible="{Binding ShowDiary}" />
+            <sections:AlbumsView IsVisible="{Binding ShowAlbums}" />
             <sections:AccountView IsVisible="{Binding ShowAccount}" />
 
             <Border Background="#FFFFFFCC" CornerRadius="12" Padding="10" Margin="0,8,0,0">

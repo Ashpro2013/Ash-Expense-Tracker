@@ -1,0 +1,150 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:AshproApp.ViewModels"
+             x:CompileBindings="False"
+             x:Class="AshproApp.Views.Sections.AlbumsView"
+             x:DataType="vm:MainWindowViewModel">
+  <Grid>
+    <Grid ColumnDefinitions="340,*" ColumnSpacing="12">
+      <Border Classes="surfaceCard">
+        <StackPanel Spacing="8">
+          <TextBlock Text="Image Albums" Classes="sectionTitle" />
+          <TextBlock Text="Save and organize personal and family images." Classes="muted" TextWrapping="Wrap" />
+
+          <TextBlock Text="Album category" Classes="fieldLabel" />
+          <ComboBox ItemsSource="{Binding AlbumCategories}" SelectedItem="{Binding SelectedAlbumCategory}" />
+
+          <TextBlock Text="Caption (optional for single upload)" Classes="fieldLabel" />
+          <TextBox Text="{Binding AlbumCaption}" Watermark="Image caption" />
+
+          <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,6,0,0">
+            <Button Content="Upload images" Classes="primaryAction" Click="UploadImages_Click" />
+          </StackPanel>
+
+          <TextBlock Text="{Binding AlbumError}" Classes="error" />
+          <TextBlock Text="{Binding AlbumInfo}" Foreground="#0F766E" TextWrapping="Wrap" />
+        </StackPanel>
+      </Border>
+
+      <Border Grid.Column="1" Classes="surfaceCard">
+        <StackPanel>
+          <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+            <TextBlock Text="Album gallery" Classes="sectionTitle" />
+            <ComboBox Grid.Column="1" Width="140" ItemsSource="{Binding AlbumFilters}" SelectedItem="{Binding SelectedAlbumFilter}" />
+          </Grid>
+
+          <TextBlock Text="No images yet. Upload personal or family photos to start your album."
+                     Classes="muted"
+                     IsVisible="{Binding ShowNoAlbumImages}" />
+
+          <ItemsControl ItemsSource="{Binding FilteredAlbumImages}" IsVisible="{Binding HasAlbumImages}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <WrapPanel Orientation="Horizontal" ItemWidth="230" ItemHeight="320" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Background="#F8FAFC" BorderBrush="#DDE3EE" BorderThickness="1" CornerRadius="14" Padding="10" Margin="0,0,10,10">
+                  <StackPanel Spacing="6">
+                    <Border Height="150" CornerRadius="10" ClipToBounds="True" Background="#E2E8F0">
+                      <Grid>
+                        <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" />
+                      </Grid>
+                    </Border>
+
+                    <TextBlock Text="{Binding Caption}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding Category}" Classes="muted" />
+                    <TextBlock Text="{Binding CreatedAtUtc, StringFormat='{}{0:MMM dd, yyyy}'}" Classes="muted" />
+
+                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="6" Margin="0,4,0,0">
+                      <Button Grid.Column="0"
+                              Content="View"
+                              Command="{Binding $parent[Window].DataContext.OpenAlbumViewerCommand}"
+                              CommandParameter="{Binding}" />
+                      <Button Grid.Column="1"
+                              Content="Download"
+                              Command="{Binding $parent[Window].DataContext.DownloadAlbumImageCommand}"
+                              CommandParameter="{Binding}" />
+                      <Button Grid.Column="2"
+                              Content="Delete"
+                              Command="{Binding $parent[Window].DataContext.DeleteAlbumImageCommand}"
+                              CommandParameter="{Binding}" />
+                    </Grid>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+    </Grid>
+
+    <Border IsVisible="{Binding IsAlbumViewerOpen}"
+            Background="#B3000000"
+            Padding="22">
+      <Border Background="#FFFFFF"
+              CornerRadius="14"
+              Padding="14"
+              HorizontalAlignment="Center"
+              VerticalAlignment="Center"
+              Width="980"
+              MaxWidth="1080"
+              Height="700"
+              MaxHeight="760">
+        <Grid RowDefinitions="Auto,*,Auto" RowSpacing="10">
+          <Grid ColumnDefinitions="*,Auto" Grid.Row="0">
+            <StackPanel Spacing="2">
+              <TextBlock Text="{Binding AlbumViewerCaption}" FontSize="18" FontWeight="SemiBold" Foreground="#0F172A" />
+              <TextBlock Text="{Binding AlbumViewerMeta}" Foreground="#334155" />
+            </StackPanel>
+            <Button Grid.Column="1"
+                    Content="Close"
+                    Command="{Binding CloseAlbumViewerCommand}" />
+          </Grid>
+
+          <Border Grid.Row="1" Background="#0F172A" CornerRadius="10" Padding="10">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+              <Image Source="{Binding AlbumViewerImage}"
+                     Width="{Binding AlbumViewerImageWidth}"
+                     Height="{Binding AlbumViewerImageHeight}"
+                     Stretch="None"
+                     HorizontalAlignment="Center"
+                     VerticalAlignment="Center" />
+            </ScrollViewer>
+          </Border>
+
+          <Grid Grid.Row="2" ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" ColumnSpacing="8">
+            <Button Grid.Column="0"
+                    Content="Previous"
+                    Command="{Binding ShowPreviousAlbumImageCommand}"
+                    IsEnabled="{Binding CanViewPreviousAlbumImage}" />
+            <Button Grid.Column="1"
+                    Content="Next"
+                    Command="{Binding ShowNextAlbumImageCommand}"
+                    IsEnabled="{Binding CanViewNextAlbumImage}" />
+            <Button Grid.Column="2"
+                    Content="-"
+                    Width="42"
+                    Command="{Binding ZoomOutAlbumImageCommand}" />
+            <Button Grid.Column="3"
+                    Content="+"
+                    Width="42"
+                    Command="{Binding ZoomInAlbumImageCommand}" />
+            <Button Grid.Column="4"
+                    Content="Reset zoom"
+                    Command="{Binding ResetAlbumImageZoomCommand}" />
+            <Button Grid.Column="5"
+                    Content="Download"
+                    Command="{Binding DownloadAlbumImageCommand}"
+                    CommandParameter="{Binding AlbumViewerItem}" />
+            <TextBlock Grid.Column="6"
+                       VerticalAlignment="Center"
+                       Foreground="#0F172A"
+                       Text="{Binding AlbumViewerZoomText}" />
+          </Grid>
+        </Grid>
+      </Border>
+    </Border>
+  </Grid>
+</UserControl>

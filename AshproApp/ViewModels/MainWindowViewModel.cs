@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using AshproApp.Models;
 using AshproApp.Services;
+using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -11,52 +12,64 @@ public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly AuthService _authService;
     private readonly RememberMeService _rememberMeService;
+    private readonly AlbumService _albumService;
     private readonly FinanceEntryService _financeEntryService;
     private readonly DiaryEntryService _diaryEntryService;
     private readonly ActivityItemService _activityItemService;
 
     private int _currentUserId;
     private bool _isInitialized;
+    private readonly List<AlbumImageCard> _albumViewerItems = new();
+    private int _albumViewerIndex = -1;
 
     public MainWindowViewModel(
         AuthService authService,
         RememberMeService rememberMeService,
+        AlbumService albumService,
         FinanceEntryService financeEntryService,
         DiaryEntryService diaryEntryService,
         ActivityItemService activityItemService)
     {
         _authService = authService;
         _rememberMeService = rememberMeService;
+        _albumService = albumService;
         _financeEntryService = financeEntryService;
         _diaryEntryService = diaryEntryService;
         _activityItemService = activityItemService;
 
-        NavigationItems = new ReadOnlyCollection<string>(new[] { "Dashboard", "Income", "Expense", "Activity", "Diary", "Account" });
+        NavigationItems = new ReadOnlyCollection<string>(new[] { "Dashboard", "Income", "Expense", "Activity", "Diary", "Albums", "Account" });
         StatusFilters = new ReadOnlyCollection<string>(new[] { "All", "Planned", "InProgress", "Done" });
         ActivityStatuses = new ReadOnlyCollection<ActivityStatus>(Enum.GetValues<ActivityStatus>());
+        AlbumCategories = new ReadOnlyCollection<string>(new[] { "Personal", "Family" });
+        AlbumFilters = new ReadOnlyCollection<string>(new[] { "All", "Personal", "Family" });
 
         IncomeEntries = new ObservableCollection<FinanceEntry>();
         ExpenseEntries = new ObservableCollection<FinanceEntry>();
         RecentEntries = new ObservableCollection<FinanceEntry>();
         DiaryEntries = new ObservableCollection<DiaryEntry>();
         Activities = new ObservableCollection<ActivityItem>();
+        AlbumImages = new ObservableCollection<AlbumImageCard>();
 
         ResetIncomeForm();
         ResetExpenseForm();
         ResetDiaryForm();
         ResetActivityForm();
         ResetPasswordForm();
+        ResetAlbumForm();
     }
 
     public ReadOnlyCollection<string> NavigationItems { get; }
     public ReadOnlyCollection<string> StatusFilters { get; }
     public ReadOnlyCollection<ActivityStatus> ActivityStatuses { get; }
+    public ReadOnlyCollection<string> AlbumCategories { get; }
+    public ReadOnlyCollection<string> AlbumFilters { get; }
 
     public ObservableCollection<FinanceEntry> IncomeEntries { get; }
     public ObservableCollection<FinanceEntry> ExpenseEntries { get; }
     public ObservableCollection<FinanceEntry> RecentEntries { get; }
     public ObservableCollection<DiaryEntry> DiaryEntries { get; }
     public ObservableCollection<ActivityItem> Activities { get; }
+    public ObservableCollection<AlbumImageCard> AlbumImages { get; }
 
     [ObservableProperty] private bool isAuthenticated;
     [ObservableProperty] private bool isLoginMode = true;
@@ -65,7 +78,6 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool ShowMainShell => IsAuthenticated;
     public bool ShowLoginPanel => IsLoginMode;
     public bool ShowRegisterPanel => !IsLoginMode;
-
     public bool IsRegisterMode => !IsLoginMode;
 
     [ObservableProperty] private string loginEmail = string.Empty;
@@ -76,11 +88,26 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private string registerConfirmPassword = string.Empty;
     [ObservableProperty] private string authError = string.Empty;
     [ObservableProperty] private string authInfo = string.Empty;
+
     [ObservableProperty] private string currentPassword = string.Empty;
     [ObservableProperty] private string newPassword = string.Empty;
     [ObservableProperty] private string confirmNewPassword = string.Empty;
     [ObservableProperty] private string passwordChangeError = string.Empty;
     [ObservableProperty] private string passwordChangeInfo = string.Empty;
+
+    [ObservableProperty] private string selectedAlbumCategory = "Personal";
+    [ObservableProperty] private string selectedAlbumFilter = "All";
+    [ObservableProperty] private string albumCaption = string.Empty;
+    [ObservableProperty] private string albumError = string.Empty;
+    [ObservableProperty] private string albumInfo = string.Empty;
+    [ObservableProperty] private bool isAlbumViewerOpen;
+    [ObservableProperty] private AlbumImageCard? albumViewerItem;
+    [ObservableProperty] private Bitmap? albumViewerImage;
+    [ObservableProperty] private string albumViewerCaption = string.Empty;
+    [ObservableProperty] private string albumViewerMeta = string.Empty;
+    [ObservableProperty] private double albumViewerZoom = 1.0;
+    [ObservableProperty] private double albumViewerImageWidth;
+    [ObservableProperty] private double albumViewerImageHeight;
 
     [ObservableProperty] private bool isBusy;
     [ObservableProperty] private string statusMessage = "Please sign in to continue.";
@@ -92,12 +119,15 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool ShowExpense => SelectedSection == "Expense";
     public bool ShowActivity => SelectedSection == "Activity";
     public bool ShowDiary => SelectedSection == "Diary";
+    public bool ShowAlbums => SelectedSection == "Albums";
     public bool ShowAccount => SelectedSection == "Account";
+
     public bool IsDashboardSelected => SelectedSection == "Dashboard";
     public bool IsIncomeSelected => SelectedSection == "Income";
     public bool IsExpenseSelected => SelectedSection == "Expense";
     public bool IsActivitySelected => SelectedSection == "Activity";
     public bool IsDiarySelected => SelectedSection == "Diary";
+    public bool IsAlbumsSelected => SelectedSection == "Albums";
     public bool IsAccountSelected => SelectedSection == "Account";
 
     [ObservableProperty] private decimal incomeTotal;
@@ -114,7 +144,6 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private DateTimeOffset? incomeEntryDate;
     [ObservableProperty] private string incomeNote = string.Empty;
     [ObservableProperty] private string incomeFormError = string.Empty;
-
     public string IncomeHeader => EditingIncomeId is null ? "Add income" : "Edit income";
 
     [ObservableProperty] private int? editingExpenseId;
@@ -123,7 +152,6 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private DateTimeOffset? expenseEntryDate;
     [ObservableProperty] private string expenseNote = string.Empty;
     [ObservableProperty] private string expenseFormError = string.Empty;
-
     public string ExpenseHeader => EditingExpenseId is null ? "Add expense" : "Edit expense";
 
     [ObservableProperty] private int? editingDiaryId;
@@ -134,10 +162,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private string diaryMood = string.Empty;
     [ObservableProperty] private string diarySearch = string.Empty;
     [ObservableProperty] private string diaryFormError = string.Empty;
-
     public string DiaryHeader => EditingDiaryId is null ? "New entry" : "Edit entry";
-
-    public IEnumerable<DiaryEntry> FilteredDiaryEntries => DiaryEntries.Where(entry => MatchesDiarySearch(entry, DiarySearch));
 
     [ObservableProperty] private int? editingActivityId;
     [ObservableProperty] private string activityTitle = string.Empty;
@@ -149,14 +174,25 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private bool activityIsImportant;
     [ObservableProperty] private string activityStatusFilter = "All";
     [ObservableProperty] private string activityFormError = string.Empty;
-
     public string ActivityHeader => EditingActivityId is null ? "Plan activity" : "Edit activity";
+
+    public IEnumerable<DiaryEntry> FilteredDiaryEntries => DiaryEntries.Where(entry => MatchesDiarySearch(entry, DiarySearch));
 
     public IEnumerable<ActivityItem> FilteredActivities => Activities
         .Where(item => ActivityStatusFilter == "All" || item.Status.ToString() == ActivityStatusFilter)
         .OrderBy(item => item.Status)
         .ThenBy(item => item.DueDate ?? DateTime.MaxValue)
         .ThenByDescending(item => item.Id);
+
+    public IEnumerable<AlbumImageCard> FilteredAlbumImages => AlbumImages
+        .Where(item => SelectedAlbumFilter == "All" || item.Category.Equals(SelectedAlbumFilter, StringComparison.OrdinalIgnoreCase))
+        .OrderByDescending(item => item.CreatedAtUtc);
+
+    public bool HasAlbumImages => FilteredAlbumImages.Any();
+    public bool ShowNoAlbumImages => !HasAlbumImages;
+    public bool CanViewPreviousAlbumImage => _albumViewerIndex > 0;
+    public bool CanViewNextAlbumImage => _albumViewerIndex >= 0 && _albumViewerIndex < _albumViewerItems.Count - 1;
+    public string AlbumViewerZoomText => $"{AlbumViewerZoom * 100:0}%";
 
     public async Task InitializeAsync()
     {
@@ -250,6 +286,7 @@ public partial class MainWindowViewModel : ViewModelBase
         ResetDiaryForm();
         ResetActivityForm();
         ResetPasswordForm();
+        ResetAlbumForm();
         _rememberMeService.Clear();
         RememberMe = false;
 
@@ -261,12 +298,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void Navigate(string? section)
     {
-        if (string.IsNullOrWhiteSpace(section))
-        {
-            return;
-        }
-
-        if (!NavigationItems.Contains(section))
+        if (string.IsNullOrWhiteSpace(section) || !NavigationItems.Contains(section))
         {
             return;
         }
@@ -306,6 +338,199 @@ public partial class MainWindowViewModel : ViewModelBase
 
         ResetPasswordForm();
         PasswordChangeInfo = "Password updated successfully.";
+    }
+
+    public async Task UploadAlbumFilesAsync(IEnumerable<string> filePaths)
+    {
+        AlbumError = string.Empty;
+        AlbumInfo = string.Empty;
+
+        if (!EnsureAuthenticated())
+        {
+            AlbumError = "Sign in required.";
+            return;
+        }
+
+        var paths = filePaths
+            .Where(path => !string.IsNullOrWhiteSpace(path) && File.Exists(path))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (paths.Count == 0)
+        {
+            AlbumError = "Please select at least one image file.";
+            return;
+        }
+
+        var uploaded = 0;
+        foreach (var path in paths)
+        {
+            var caption = paths.Count == 1 ? AlbumCaption : string.Empty;
+            var saved = await _albumService.AddAsync(_currentUserId, path, SelectedAlbumCategory, caption);
+            if (saved is not null)
+            {
+                uploaded++;
+            }
+        }
+
+        if (uploaded == 0)
+        {
+            AlbumError = "No images were uploaded. Ensure the files are valid images.";
+            return;
+        }
+
+        AlbumCaption = string.Empty;
+        await LoadAlbumsAsync();
+        AlbumInfo = uploaded == 1
+            ? $"1 image uploaded to {SelectedAlbumCategory} album."
+            : $"{uploaded} images uploaded to {SelectedAlbumCategory} album.";
+    }
+
+    [RelayCommand]
+    private async Task DeleteAlbumImageAsync(AlbumImageCard? image)
+    {
+        if (image is null || !EnsureAuthenticated())
+        {
+            return;
+        }
+
+        AlbumError = string.Empty;
+        AlbumInfo = string.Empty;
+
+        var deleted = await _albumService.DeleteAsync(_currentUserId, image.Id);
+        if (!deleted)
+        {
+            AlbumError = "Unable to delete image.";
+            return;
+        }
+
+        await LoadAlbumsAsync();
+        AlbumInfo = "Image deleted.";
+    }
+
+    [RelayCommand]
+    private void OpenAlbumViewer(AlbumImageCard? image)
+    {
+        if (image is null || !EnsureAuthenticated())
+        {
+            return;
+        }
+
+        var visibleItems = FilteredAlbumImages.ToList();
+        if (visibleItems.Count == 0)
+        {
+            return;
+        }
+
+        var index = visibleItems.FindIndex(item => item.Id == image.Id);
+        if (index < 0)
+        {
+            return;
+        }
+
+        _albumViewerItems.Clear();
+        _albumViewerItems.AddRange(visibleItems);
+        _albumViewerIndex = index;
+        IsAlbumViewerOpen = true;
+        ShowAlbumViewerImage(resetZoom: true);
+    }
+
+    [RelayCommand]
+    private void CloseAlbumViewer()
+    {
+        IsAlbumViewerOpen = false;
+        _albumViewerItems.Clear();
+        _albumViewerIndex = -1;
+
+        AlbumViewerItem = null;
+        AlbumViewerCaption = string.Empty;
+        AlbumViewerMeta = string.Empty;
+        AlbumViewerZoom = 1.0;
+        AlbumViewerImageWidth = 0;
+        AlbumViewerImageHeight = 0;
+
+        AlbumViewerImage?.Dispose();
+        AlbumViewerImage = null;
+
+        OnPropertyChanged(nameof(CanViewPreviousAlbumImage));
+        OnPropertyChanged(nameof(CanViewNextAlbumImage));
+    }
+
+    [RelayCommand]
+    private void ShowPreviousAlbumImage()
+    {
+        if (!CanViewPreviousAlbumImage)
+        {
+            return;
+        }
+
+        _albumViewerIndex--;
+        ShowAlbumViewerImage(resetZoom: false);
+    }
+
+    [RelayCommand]
+    private void ShowNextAlbumImage()
+    {
+        if (!CanViewNextAlbumImage)
+        {
+            return;
+        }
+
+        _albumViewerIndex++;
+        ShowAlbumViewerImage(resetZoom: false);
+    }
+
+    [RelayCommand]
+    private void ZoomInAlbumImage()
+    {
+        SetAlbumViewerZoom(AlbumViewerZoom + 0.25);
+    }
+
+    [RelayCommand]
+    private void ZoomOutAlbumImage()
+    {
+        SetAlbumViewerZoom(AlbumViewerZoom - 0.25);
+    }
+
+    [RelayCommand]
+    private void ResetAlbumImageZoom()
+    {
+        SetAlbumViewerZoom(1.0);
+    }
+
+    [RelayCommand]
+    private void DownloadAlbumImage(AlbumImageCard? image)
+    {
+        if (image is null || !EnsureAuthenticated())
+        {
+            return;
+        }
+
+        AlbumError = string.Empty;
+        AlbumInfo = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(image.FilePath) || !File.Exists(image.FilePath))
+        {
+            AlbumError = "Unable to find the image file.";
+            return;
+        }
+
+        try
+        {
+            var extension = Path.GetExtension(image.FilePath);
+            var fileName = BuildDownloadFileName(image.Caption);
+            var downloadsDirectory = GetDownloadsDirectory();
+            Directory.CreateDirectory(downloadsDirectory);
+
+            var destinationPath = GetUniqueFilePath(downloadsDirectory, fileName, extension);
+            File.Copy(image.FilePath, destinationPath);
+
+            AlbumInfo = $"Image downloaded to {destinationPath}";
+        }
+        catch
+        {
+            AlbumError = "Download failed. Try again.";
+        }
     }
 
     [RelayCommand]
@@ -691,12 +916,15 @@ public partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(ShowExpense));
         OnPropertyChanged(nameof(ShowActivity));
         OnPropertyChanged(nameof(ShowDiary));
+        OnPropertyChanged(nameof(ShowAlbums));
         OnPropertyChanged(nameof(ShowAccount));
+
         OnPropertyChanged(nameof(IsDashboardSelected));
         OnPropertyChanged(nameof(IsIncomeSelected));
         OnPropertyChanged(nameof(IsExpenseSelected));
         OnPropertyChanged(nameof(IsActivitySelected));
         OnPropertyChanged(nameof(IsDiarySelected));
+        OnPropertyChanged(nameof(IsAlbumsSelected));
         OnPropertyChanged(nameof(IsAccountSelected));
     }
 
@@ -735,6 +963,24 @@ public partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(FilteredActivities));
     }
 
+    partial void OnSelectedAlbumFilterChanged(string value)
+    {
+        OnPropertyChanged(nameof(FilteredAlbumImages));
+        OnPropertyChanged(nameof(HasAlbumImages));
+        OnPropertyChanged(nameof(ShowNoAlbumImages));
+
+        if (IsAlbumViewerOpen)
+        {
+            CloseAlbumViewer();
+        }
+    }
+
+    partial void OnAlbumViewerZoomChanged(double value)
+    {
+        RefreshAlbumViewerDimensions();
+        OnPropertyChanged(nameof(AlbumViewerZoomText));
+    }
+
     private async Task ReloadAllAsync()
     {
         if (!EnsureAuthenticated())
@@ -750,6 +996,7 @@ public partial class MainWindowViewModel : ViewModelBase
             await LoadFinanceAsync();
             await LoadDiaryAsync();
             await LoadActivitiesAsync();
+            await LoadAlbumsAsync();
             StatusMessage = "Ready";
         }
         catch (Exception ex)
@@ -793,6 +1040,45 @@ public partial class MainWindowViewModel : ViewModelBase
         UpdateDashboardMetrics();
     }
 
+    private async Task LoadAlbumsAsync()
+    {
+        if (IsAlbumViewerOpen)
+        {
+            CloseAlbumViewer();
+        }
+
+        var items = await _albumService.GetAllAsync(_currentUserId);
+        ReplaceAlbumCollection(items);
+        OnPropertyChanged(nameof(FilteredAlbumImages));
+        OnPropertyChanged(nameof(HasAlbumImages));
+        OnPropertyChanged(nameof(ShowNoAlbumImages));
+    }
+
+    private void ReplaceAlbumCollection(IEnumerable<AlbumImage> items)
+    {
+        foreach (var image in AlbumImages)
+        {
+            image.Thumbnail?.Dispose();
+        }
+
+        AlbumImages.Clear();
+
+        foreach (var item in items)
+        {
+            var fullPath = _albumService.GetImagePath(_currentUserId, item.FileName);
+            AlbumImages.Add(new AlbumImageCard
+            {
+                Id = item.Id,
+                Category = item.Category,
+                Caption = item.Caption,
+                CreatedAtUtc = item.CreatedAtUtc,
+                FileName = item.FileName,
+                FilePath = fullPath,
+                Thumbnail = TryCreateBitmap(fullPath)
+            });
+        }
+    }
+
     private void UpdateDashboardMetrics()
     {
         var periodStart = DateTime.Today.AddDays(-30);
@@ -819,13 +1105,14 @@ public partial class MainWindowViewModel : ViewModelBase
         IsAuthenticated = true;
         IsLoginMode = true;
         SelectedSection = "Dashboard";
+
         ResetAuthInputs();
         ResetPasswordForm();
+        ResetAlbumForm();
 
         if (RememberMe)
         {
-            var saved = await _rememberMeService.SaveAsync(user.Id, user.Email);
-            rememberPersisted = saved;
+            rememberPersisted = await _rememberMeService.SaveAsync(user.Id, user.Email);
         }
         else
         {
@@ -833,29 +1120,40 @@ public partial class MainWindowViewModel : ViewModelBase
         }
 
         await ReloadAllAsync();
-        if (!rememberPersisted)
-        {
-            StatusMessage = "Signed in, but unable to persist remember-me session.";
-        }
-        else
-        {
-            StatusMessage = isRememberedSession ? "Signed in with remembered session." : "Signed in.";
-        }
+        StatusMessage = !rememberPersisted
+            ? "Signed in, but unable to persist remember-me session."
+            : (isRememberedSession ? "Signed in with remembered session." : "Signed in.");
     }
 
     private void ClearData()
     {
+        if (IsAlbumViewerOpen)
+        {
+            CloseAlbumViewer();
+        }
+
         IncomeEntries.Clear();
         ExpenseEntries.Clear();
         RecentEntries.Clear();
         DiaryEntries.Clear();
         Activities.Clear();
 
+        foreach (var image in AlbumImages)
+        {
+            image.Thumbnail?.Dispose();
+        }
+
+        AlbumImages.Clear();
+
         IncomeTotal = 0;
         ExpenseTotal = 0;
         Balance = 0;
         DiaryEntriesCount = 0;
         OpenActivitiesCount = 0;
+
+        OnPropertyChanged(nameof(FilteredAlbumImages));
+        OnPropertyChanged(nameof(HasAlbumImages));
+        OnPropertyChanged(nameof(ShowNoAlbumImages));
     }
 
     private void ResetAuthInputs()
@@ -874,6 +1172,20 @@ public partial class MainWindowViewModel : ViewModelBase
         ConfirmNewPassword = string.Empty;
         PasswordChangeError = string.Empty;
         PasswordChangeInfo = string.Empty;
+    }
+
+    private void ResetAlbumForm()
+    {
+        if (IsAlbumViewerOpen)
+        {
+            CloseAlbumViewer();
+        }
+
+        SelectedAlbumCategory = "Personal";
+        SelectedAlbumFilter = "All";
+        AlbumCaption = string.Empty;
+        AlbumError = string.Empty;
+        AlbumInfo = string.Empty;
     }
 
     private void ResetIncomeForm()
@@ -920,9 +1232,134 @@ public partial class MainWindowViewModel : ViewModelBase
         ActivityFormError = string.Empty;
     }
 
+    private void ShowAlbumViewerImage(bool resetZoom)
+    {
+        if (_albumViewerIndex < 0 || _albumViewerIndex >= _albumViewerItems.Count)
+        {
+            CloseAlbumViewer();
+            return;
+        }
+
+        var selected = _albumViewerItems[_albumViewerIndex];
+        var bitmap = TryCreateBitmap(selected.FilePath);
+        if (bitmap is null)
+        {
+            AlbumError = "Unable to open selected image.";
+            CloseAlbumViewer();
+            return;
+        }
+
+        AlbumViewerImage?.Dispose();
+        AlbumViewerImage = bitmap;
+
+        AlbumViewerItem = selected;
+        AlbumViewerCaption = selected.Caption;
+        AlbumViewerMeta = $"{selected.Category} • {selected.CreatedAtUtc:MMM dd, yyyy}";
+
+        if (resetZoom)
+        {
+            AlbumViewerZoom = 1.0;
+        }
+
+        RefreshAlbumViewerDimensions();
+
+        OnPropertyChanged(nameof(CanViewPreviousAlbumImage));
+        OnPropertyChanged(nameof(CanViewNextAlbumImage));
+    }
+
+    private void SetAlbumViewerZoom(double zoom)
+    {
+        var clampedZoom = Math.Clamp(zoom, 0.25, 4.0);
+        AlbumViewerZoom = clampedZoom;
+    }
+
+    private void RefreshAlbumViewerDimensions()
+    {
+        if (AlbumViewerImage is null)
+        {
+            AlbumViewerImageWidth = 0;
+            AlbumViewerImageHeight = 0;
+            return;
+        }
+
+        AlbumViewerImageWidth = Math.Max(1, AlbumViewerImage.PixelSize.Width * AlbumViewerZoom);
+        AlbumViewerImageHeight = Math.Max(1, AlbumViewerImage.PixelSize.Height * AlbumViewerZoom);
+    }
+
+    private static string BuildDownloadFileName(string caption)
+    {
+        var baseName = string.IsNullOrWhiteSpace(caption)
+            ? $"album_image_{DateTime.Now:yyyyMMdd_HHmmss}"
+            : caption.Trim();
+
+        var invalidChars = Path.GetInvalidFileNameChars();
+        var cleanName = new string(baseName
+            .Select(ch => invalidChars.Contains(ch) ? '_' : ch)
+            .ToArray())
+            .Trim();
+
+        if (string.IsNullOrWhiteSpace(cleanName))
+        {
+            cleanName = $"album_image_{DateTime.Now:yyyyMMdd_HHmmss}";
+        }
+
+        return cleanName;
+    }
+
+    private static string GetDownloadsDirectory()
+    {
+        var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        if (string.IsNullOrWhiteSpace(userProfile))
+        {
+            return Environment.CurrentDirectory;
+        }
+
+        return Path.Combine(userProfile, "Downloads");
+    }
+
+    private static string GetUniqueFilePath(string directory, string fileName, string extension)
+    {
+        var normalizedExtension = string.IsNullOrWhiteSpace(extension) ? ".jpg" : extension.ToLowerInvariant();
+        var candidatePath = Path.Combine(directory, $"{fileName}{normalizedExtension}");
+        if (!File.Exists(candidatePath))
+        {
+            return candidatePath;
+        }
+
+        var counter = 1;
+        while (true)
+        {
+            candidatePath = Path.Combine(directory, $"{fileName}_{counter}{normalizedExtension}");
+            if (!File.Exists(candidatePath))
+            {
+                return candidatePath;
+            }
+
+            counter++;
+        }
+    }
+
     private bool EnsureAuthenticated()
     {
         return IsAuthenticated && _currentUserId > 0;
+    }
+
+    private static Bitmap? TryCreateBitmap(string path)
+    {
+        try
+        {
+            if (!File.Exists(path))
+            {
+                return null;
+            }
+
+            using var stream = File.OpenRead(path);
+            return new Bitmap(stream);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static void ReplaceCollection<T>(ObservableCollection<T> collection, IEnumerable<T> source)
@@ -987,5 +1424,16 @@ public partial class MainWindowViewModel : ViewModelBase
     private static DateTime ToDate(DateTimeOffset? value)
     {
         return value?.Date ?? DateTime.Today;
+    }
+
+    public sealed class AlbumImageCard
+    {
+        public string Id { get; init; } = string.Empty;
+        public string Category { get; init; } = "Personal";
+        public string Caption { get; init; } = string.Empty;
+        public string FileName { get; init; } = string.Empty;
+        public string FilePath { get; init; } = string.Empty;
+        public DateTime CreatedAtUtc { get; init; }
+        public Bitmap? Thumbnail { get; init; }
     }
 }
