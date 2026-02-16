@@ -2,12 +2,16 @@ using ExpenseIncomeTracker.Infrastructure;
 using ExpenseIncomeTracker.Infrastructure.Identity;
 using ExpenseIncomeTracker.Infrastructure.Persistence;
 using ExpenseIncomeTracker.Web.Components;
+using ExpenseIncomeTracker.Web.Models;
+using ExpenseIncomeTracker.Web.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using MudBlazor.Services;
+using Microsoft.FluentUI.AspNetCore.Components;
+using Microsoft.Extensions.Options;
+using MongoDB.Driver;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,8 +20,61 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<AuthenticationStateProvider, ServerAuthenticationStateProvider>();
-builder.Services.AddMudServices();
+builder.Services.AddHttpClient();
+builder.Services.AddFluentUIComponents();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.Configure<MongoDbSettings>(builder.Configuration.GetSection(MongoDbSettings.SectionName));
+builder.Services.AddSingleton<IMongoClient>(sp =>
+{
+    var settings = sp.GetRequiredService<IOptions<MongoDbSettings>>().Value;
+    var connectionString = settings.ConnectionString;
+    if (connectionString.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+    {
+        connectionString = $"mongodb://{connectionString["http://".Length..]}";
+    }
+    else if (connectionString.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+    {
+        connectionString = $"mongodb://{connectionString["https://".Length..]}";
+    }
+    var urlBuilder = new MongoUrlBuilder(connectionString);
+    var hasConfiguredUsername = !string.IsNullOrWhiteSpace(settings.Username);
+    var hasConfiguredPassword = !string.IsNullOrWhiteSpace(settings.Password);
+
+    if (hasConfiguredUsername != hasConfiguredPassword)
+    {
+        throw new InvalidOperationException("MongoDb settings require both username and password when either is provided.");
+    }
+
+    if (hasConfiguredUsername && hasConfiguredPassword)
+    {
+        urlBuilder.Username = settings.Username;
+        urlBuilder.Password = settings.Password;
+    }
+
+    var hasCredentials = !string.IsNullOrWhiteSpace(urlBuilder.Username)
+        && !string.IsNullOrWhiteSpace(urlBuilder.Password);
+
+    if (hasCredentials && !string.IsNullOrWhiteSpace(settings.AuthDatabase))
+    {
+        urlBuilder.AuthenticationSource = settings.AuthDatabase;
+    }
+
+    if (hasCredentials && !string.IsNullOrWhiteSpace(settings.AuthMechanism))
+    {
+        urlBuilder.AuthenticationMechanism = settings.AuthMechanism;
+    }
+
+    return new MongoClient(urlBuilder.ToMongoUrl());
+});
+builder.Services.AddSingleton(sp =>
+{
+    var settings = sp.GetRequiredService<IOptions<MongoDbSettings>>().Value;
+    var client = sp.GetRequiredService<IMongoClient>();
+    return client.GetDatabase(settings.DatabaseName);
+});
+builder.Services.AddScoped<DiaryService>();
+builder.Services.AddScoped<ActivityService>();
+builder.Services.AddScoped<FinanceEntryService>();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
     {

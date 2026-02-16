@@ -1,0 +1,551 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:AshproApp.ViewModels"
+        xmlns:models="using:AshproApp.Models"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        x:CompileBindings="False"
+        x:Class="AshproApp.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Width="1320"
+        Height="860"
+        MinWidth="1100"
+        MinHeight="760"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="AshproApp">
+
+  <Window.Styles>
+    <Style Selector="TextBlock">
+      <Setter Property="Foreground" Value="#0F172A" />
+    </Style>
+
+    <Style Selector="Window">
+      <Setter Property="Background" Value="#F5F7FB" />
+    </Style>
+
+    <Style Selector="Border.authCard, Border.surfaceCard">
+      <Setter Property="CornerRadius" Value="20" />
+      <Setter Property="Padding" Value="22" />
+      <Setter Property="BorderBrush" Value="#DDE3EE" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Background" Value="#FAFCFF" />
+      <Setter Property="Margin" Value="0,0,0,12" />
+    </Style>
+
+    <Style Selector="TextBlock.pageTitle">
+      <Setter Property="FontSize" Value="28" />
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="Foreground" Value="#0F172A" />
+    </Style>
+
+    <Style Selector="TextBlock.sectionTitle">
+      <Setter Property="FontSize" Value="20" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Margin" Value="0,0,0,10" />
+      <Setter Property="Foreground" Value="#0F172A" />
+    </Style>
+
+    <Style Selector="TextBlock.subtitle, TextBlock.muted">
+      <Setter Property="Foreground" Value="#64748B" />
+    </Style>
+
+    <Style Selector="TextBlock.fieldLabel">
+      <Setter Property="Foreground" Value="#0F172A" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style Selector="TextBlock.error">
+      <Setter Property="Foreground" Value="#B42318" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style Selector="Button.primaryAction">
+      <Setter Property="Background" Value="#0F766E" />
+      <Setter Property="Foreground" Value="White" />
+      <Setter Property="BorderBrush" Value="#0F766E" />
+      <Setter Property="Padding" Value="14,8" />
+      <Setter Property="CornerRadius" Value="10" />
+    </Style>
+
+    <Style Selector="Button">
+      <Setter Property="Foreground" Value="#0F172A" />
+      <Setter Property="Background" Value="#FFFFFF" />
+      <Setter Property="BorderBrush" Value="#CBD5E1" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Padding" Value="12,8" />
+      <Setter Property="CornerRadius" Value="10" />
+    </Style>
+
+    <Style Selector="Button.secondaryAction">
+      <Setter Property="Background" Value="#E2F2EF" />
+      <Setter Property="Foreground" Value="#0F766E" />
+      <Setter Property="BorderBrush" Value="#88CDC6" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Padding" Value="14,8" />
+      <Setter Property="CornerRadius" Value="10" />
+    </Style>
+
+    <Style Selector="ToggleButton.navButton">
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+      <Setter Property="Padding" Value="12,10" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="#DCE5F1" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+      <Setter Property="CornerRadius" Value="12" />
+      <Setter Property="FontWeight" Value="Medium" />
+      <Setter Property="Margin" Value="0,0,0,6" />
+    </Style>
+
+    <Style Selector="ToggleButton.navButton:checked">
+      <Setter Property="Background" Value="#2D9189" />
+      <Setter Property="BorderBrush" Value="#54BFB7" />
+      <Setter Property="Foreground" Value="White" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style Selector="TextBox, DatePicker, ComboBox">
+      <Setter Property="MinHeight" Value="34" />
+      <Setter Property="Foreground" Value="#0F172A" />
+      <Setter Property="Background" Value="White" />
+      <Setter Property="BorderBrush" Value="#CBD5E1" />
+    </Style>
+
+    <Style Selector="CheckBox">
+      <Setter Property="Foreground" Value="#0F172A" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+  </Window.Styles>
+
+  <Grid>
+    <Grid IsVisible="{Binding ShowAuthScreen}" ColumnDefinitions="1.2*,1*">
+      <Border Background="#EAF6F5" CornerRadius="0" Padding="56" Grid.Column="0">
+        <StackPanel VerticalAlignment="Center" MaxWidth="520" Spacing="16">
+          <TextBlock Text="Reflect daily. Move intentionally." FontSize="42" FontWeight="Bold" TextWrapping="Wrap" />
+          <TextBlock Text="A calm space to capture memories, track cash flow, and keep next actions visible." Classes="subtitle" TextWrapping="Wrap" />
+          <WrapPanel Margin="0,12,0,0" ItemHeight="30" ItemWidth="190">
+            <Border Background="#D1F0EC" CornerRadius="999" Padding="10,6" Margin="0,0,8,8"><TextBlock Text="Daily reflections" Foreground="#0F766E" /></Border>
+            <Border Background="#D1F0EC" CornerRadius="999" Padding="10,6" Margin="0,0,8,8"><TextBlock Text="Focused activity plans" Foreground="#0F766E" /></Border>
+            <Border Background="#D1F0EC" CornerRadius="999" Padding="10,6" Margin="0,0,8,8"><TextBlock Text="Private by design" Foreground="#0F766E" /></Border>
+          </WrapPanel>
+        </StackPanel>
+      </Border>
+
+      <Border Grid.Column="1" Background="#F9FBFD" Padding="36">
+        <Grid VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="430">
+          <Border Classes="authCard" Width="420">
+            <StackPanel Spacing="14">
+             
+
+              <StackPanel IsVisible="{Binding ShowLoginPanel}" Spacing="10">
+                <TextBlock Text="Welcome back" Classes="sectionTitle" />
+                <TextBlock Text="Sign in to continue your diary and activity flow." Classes="subtitle" TextWrapping="Wrap" />
+
+                <TextBlock Text="Email" Classes="fieldLabel" />
+                <TextBox Text="{Binding LoginEmail}" Watermark="you@example.com" />
+                <TextBlock Text="Password" Classes="fieldLabel" />
+                <TextBox Text="{Binding LoginPassword}" PasswordChar="●" Watermark="Password" />
+                <Border Background="#E8EEF9" CornerRadius="10" Padding="10,8">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <CheckBox IsChecked="{Binding RememberMe}" VerticalAlignment="Center" BorderBrush="#0F172A" Background="#FFFFFF" />
+                    <TextBlock Text="Remember me" Classes="fieldLabel" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Border>
+
+                <TextBlock Text="{Binding AuthError}" Classes="error" />
+                <TextBlock Text="{Binding AuthInfo}" Foreground="#0F766E" />
+
+                <Button Content="Sign in" Classes="primaryAction" Command="{Binding SignInCommand}" />
+                <Button Content="Sign up (Create new account)" Classes="secondaryAction" Command="{Binding ShowRegisterCommand}" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <TextBlock Text="New here?" VerticalAlignment="Center" />
+                  <Button Content="Sign up" Command="{Binding ShowRegisterCommand}" />
+                </StackPanel>
+              </StackPanel>
+
+              <StackPanel IsVisible="{Binding ShowRegisterPanel}" Spacing="10">
+                <TextBlock Text="Create your account" Classes="sectionTitle" />
+                <TextBlock Text="Start a new diary and plan what matters." Classes="subtitle" TextWrapping="Wrap" />
+
+                <TextBlock Text="Email" Classes="fieldLabel" />
+                <TextBox Text="{Binding RegisterEmail}" Watermark="you@example.com" />
+                <TextBlock Text="Password" Classes="fieldLabel" />
+                <TextBox Text="{Binding RegisterPassword}" PasswordChar="●" Watermark="Minimum 6 characters" />
+                <TextBlock Text="Confirm password" Classes="fieldLabel" />
+                <TextBox Text="{Binding RegisterConfirmPassword}" PasswordChar="●" Watermark="Confirm password" />
+
+                <TextBlock Text="{Binding AuthError}" Classes="error" />
+                <TextBlock Text="{Binding AuthInfo}" Foreground="#0F766E" />
+
+                <Button Content="Create account" Classes="primaryAction" Command="{Binding SignUpCommand}" />
+                <Button Content="Back to Sign in" Classes="secondaryAction" Command="{Binding ShowLoginCommand}" />
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <TextBlock Text="Already have an account?" />
+                  <Button Content="Sign in" Command="{Binding ShowLoginCommand}" />
+                </StackPanel>
+              </StackPanel>
+            </StackPanel>
+          </Border>
+        </Grid>
+      </Border>
+    </Grid>
+
+    <Grid IsVisible="{Binding ShowMainShell}" RowDefinitions="Auto,*">
+      <Border Background="#FFFFFFCC" BorderBrush="#DDE3EE" BorderThickness="0,0,0,1" Padding="24,16">
+        <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+          <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+            <Border Width="42" Height="42" CornerRadius="12" Background="#0F766E">
+              <TextBlock Text="EI" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <StackPanel>
+              <TextBlock Text="Finance, Diary &amp; Activity Manager" FontSize="20" FontWeight="Bold" />
+              <TextBlock Text="Track cash flow and daily progress in one workspace." Classes="subtitle" />
+            </StackPanel>
+          </StackPanel>
+
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+            <Border Background="#DDF3F0" CornerRadius="999" Padding="10,4">
+              <TextBlock Text="{Binding CurrentUserEmail}" Foreground="#0F766E" />
+            </Border>
+            <Button Content="Refresh" Classes="secondaryAction" Command="{Binding RefreshCommand}" />
+            <Button Content="Sign out" Classes="secondaryAction" Command="{Binding SignOutCommand}" />
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <Grid Grid.Row="1" ColumnDefinitions="260,*" ColumnSpacing="18" Margin="20">
+        <Border Background="#12223A" CornerRadius="20" Padding="14" BorderBrush="#2E3F5B" BorderThickness="1">
+          <StackPanel>
+            <StackPanel Margin="6,4,6,12">
+              <TextBlock Text="CashTrack Pro" Foreground="#F8FAFC" FontSize="22" FontWeight="Bold" />
+              <TextBlock Text="Finance, Diary &amp; Activity" Foreground="#C0D3E6" />
+            </StackPanel>
+
+            <ToggleButton Classes="navButton" Content="Dashboard" IsChecked="{Binding IsDashboardSelected, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="Dashboard" />
+            <ToggleButton Classes="navButton" Content="Income" IsChecked="{Binding IsIncomeSelected, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="Income" />
+            <ToggleButton Classes="navButton" Content="Expense" IsChecked="{Binding IsExpenseSelected, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="Expense" />
+            <ToggleButton Classes="navButton" Content="Activity" IsChecked="{Binding IsActivitySelected, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="Activity" />
+            <ToggleButton Classes="navButton" Content="Diary" IsChecked="{Binding IsDiarySelected, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="Diary" />
+            <ToggleButton Classes="navButton" Content="Account" IsChecked="{Binding IsAccountSelected, Mode=OneWay}" Command="{Binding NavigateCommand}" CommandParameter="Account" />
+          </StackPanel>
+        </Border>
+
+        <ScrollViewer Grid.Column="1">
+          <StackPanel>
+            <StackPanel IsVisible="{Binding ShowDashboard}">
+              <TextBlock Text="Dashboard" Classes="pageTitle" />
+              <TextBlock Text="Income, expense, and balance overview with visual trends." Classes="subtitle" Margin="0,0,0,12" />
+
+              <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
+                <Border Classes="surfaceCard">
+                  <StackPanel>
+                    <TextBlock Text="Total income" Classes="muted" />
+                    <TextBlock Text="{Binding IncomeTotal, StringFormat='{}{0:C}'}" FontSize="28" FontWeight="Bold" />
+                    <TextBlock Text="Last 30 days" Classes="muted" />
+                  </StackPanel>
+                </Border>
+                <Border Grid.Column="1" Classes="surfaceCard">
+                  <StackPanel>
+                    <TextBlock Text="Total expense" Classes="muted" />
+                    <TextBlock Text="{Binding ExpenseTotal, StringFormat='{}{0:C}'}" FontSize="28" FontWeight="Bold" />
+                    <TextBlock Text="Last 30 days" Classes="muted" />
+                  </StackPanel>
+                </Border>
+                <Border Grid.Column="2" Classes="surfaceCard">
+                  <StackPanel>
+                    <TextBlock Text="Balance" Classes="muted" />
+                    <TextBlock Text="{Binding Balance, StringFormat='{}{0:C}'}" FontSize="28" FontWeight="Bold" />
+                    <TextBlock Text="{Binding BalanceStatus}" Foreground="#0F766E" />
+                  </StackPanel>
+                </Border>
+              </Grid>
+
+              <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                <Border Classes="surfaceCard">
+                  <StackPanel>
+                    <TextBlock Text="Diary entries" Classes="muted" />
+                    <TextBlock Text="{Binding DiaryEntriesCount}" FontSize="26" FontWeight="Bold" />
+                  </StackPanel>
+                </Border>
+                <Border Grid.Column="1" Classes="surfaceCard">
+                  <StackPanel>
+                    <TextBlock Text="Open activities" Classes="muted" />
+                    <TextBlock Text="{Binding OpenActivitiesCount}" FontSize="26" FontWeight="Bold" />
+                  </StackPanel>
+                </Border>
+              </Grid>
+
+              <Border Classes="surfaceCard">
+                <StackPanel>
+                  <TextBlock Text="Recent entries" Classes="sectionTitle" />
+                  <ItemsControl ItemsSource="{Binding RecentEntries}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="models:FinanceEntry">
+                        <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,8">
+                          <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                          <TextBlock Grid.Column="1" Text="{Binding EntryDate, StringFormat='{}{0:MMM dd, yyyy}'}" Classes="muted" Margin="12,0,0,0" />
+                          <TextBlock Grid.Column="2" Text="{Binding Amount, StringFormat='{}{0:C}'}" FontWeight="SemiBold" Margin="12,0,0,0" />
+                        </Grid>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </Border>
+            </StackPanel>
+
+            <Grid IsVisible="{Binding ShowIncome}" ColumnDefinitions="430,*" ColumnSpacing="12">
+              <Border Classes="surfaceCard">
+                <StackPanel Spacing="8">
+                  <TextBlock Text="{Binding IncomeHeader}" Classes="sectionTitle" />
+                  <TextBlock Text="Title" Classes="fieldLabel" />
+                  <TextBox Text="{Binding IncomeTitle}" />
+                  <TextBlock Text="Amount" Classes="fieldLabel" />
+                  <TextBox Text="{Binding IncomeAmount}" />
+                  <TextBlock Text="Entry date" Classes="fieldLabel" />
+                  <DatePicker SelectedDate="{Binding IncomeEntryDate}" />
+                  <TextBlock Text="Note" Classes="fieldLabel" />
+                  <TextBox Text="{Binding IncomeNote}" AcceptsReturn="True" Height="90" TextWrapping="Wrap" />
+                  <TextBlock Text="{Binding IncomeFormError}" Classes="error" />
+                  <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,6,0,0">
+                    <Button Content="Save income" Classes="primaryAction" Command="{Binding SaveIncomeCommand}" />
+                    <Button Content="Cancel" Command="{Binding CancelIncomeEditCommand}" />
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+
+              <Border Grid.Column="1" Classes="surfaceCard">
+                <StackPanel>
+                  <TextBlock Text="Income history" Classes="sectionTitle" />
+                  <TextBlock Text="{Binding IncomeTotal, StringFormat='Last 30 days total: {0:C}'}" Classes="muted" Margin="0,0,0,8" />
+                  <ItemsControl ItemsSource="{Binding IncomeEntries}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="models:FinanceEntry">
+                        <Border Background="#EAF6F5" CornerRadius="14" Padding="14" Margin="0,0,0,8">
+                          <StackPanel Spacing="6">
+                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding EntryDate, StringFormat='{}{0:MMM dd, yyyy}'}" Classes="muted" />
+                            <TextBlock Text="{Binding Amount, StringFormat='{}{0:C}'}" FontWeight="Bold" />
+                            <TextBlock Text="{Binding Note}" TextWrapping="Wrap" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                              <Button Content="Edit" Command="{Binding $parent[Window].DataContext.EditIncomeCommand}" CommandParameter="{Binding}" />
+                              <Button Content="Delete" Command="{Binding $parent[Window].DataContext.DeleteIncomeCommand}" CommandParameter="{Binding}" />
+                            </StackPanel>
+                          </StackPanel>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </Border>
+            </Grid>
+
+            <Grid IsVisible="{Binding ShowExpense}" ColumnDefinitions="430,*" ColumnSpacing="12">
+              <Border Classes="surfaceCard">
+                <StackPanel Spacing="8">
+                  <TextBlock Text="{Binding ExpenseHeader}" Classes="sectionTitle" />
+                  <TextBlock Text="Title" Classes="fieldLabel" />
+                  <TextBox Text="{Binding ExpenseTitle}" />
+                  <TextBlock Text="Amount" Classes="fieldLabel" />
+                  <TextBox Text="{Binding ExpenseAmount}" />
+                  <TextBlock Text="Entry date" Classes="fieldLabel" />
+                  <DatePicker SelectedDate="{Binding ExpenseEntryDate}" />
+                  <TextBlock Text="Note" Classes="fieldLabel" />
+                  <TextBox Text="{Binding ExpenseNote}" AcceptsReturn="True" Height="90" TextWrapping="Wrap" />
+                  <TextBlock Text="{Binding ExpenseFormError}" Classes="error" />
+                  <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,6,0,0">
+                    <Button Content="Save expense" Classes="primaryAction" Command="{Binding SaveExpenseCommand}" />
+                    <Button Content="Cancel" Command="{Binding CancelExpenseEditCommand}" />
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+
+              <Border Grid.Column="1" Classes="surfaceCard">
+                <StackPanel>
+                  <TextBlock Text="Expense history" Classes="sectionTitle" />
+                  <TextBlock Text="{Binding ExpenseTotal, StringFormat='Last 30 days total: {0:C}'}" Classes="muted" Margin="0,0,0,8" />
+                  <ItemsControl ItemsSource="{Binding ExpenseEntries}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="models:FinanceEntry">
+                        <Border Background="#FFF1E9" CornerRadius="14" Padding="14" Margin="0,0,0,8">
+                          <StackPanel Spacing="6">
+                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding EntryDate, StringFormat='{}{0:MMM dd, yyyy}'}" Classes="muted" />
+                            <TextBlock Text="{Binding Amount, StringFormat='{}{0:C}'}" FontWeight="Bold" />
+                            <TextBlock Text="{Binding Note}" TextWrapping="Wrap" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                              <Button Content="Edit" Command="{Binding $parent[Window].DataContext.EditExpenseCommand}" CommandParameter="{Binding}" />
+                              <Button Content="Delete" Command="{Binding $parent[Window].DataContext.DeleteExpenseCommand}" CommandParameter="{Binding}" />
+                            </StackPanel>
+                          </StackPanel>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </Border>
+            </Grid>
+
+            <Grid IsVisible="{Binding ShowActivity}" ColumnDefinitions="430,*" ColumnSpacing="12">
+              <Border Classes="surfaceCard">
+                <StackPanel Spacing="8">
+                  <TextBlock Text="{Binding ActivityHeader}" Classes="sectionTitle" />
+                  <TextBlock Text="Title" Classes="fieldLabel" />
+                  <TextBox Text="{Binding ActivityTitle}" />
+                  <TextBlock Text="Category" Classes="fieldLabel" />
+                  <TextBox Text="{Binding ActivityCategory}" />
+                  <TextBlock Text="Status" Classes="fieldLabel" />
+                  <ComboBox ItemsSource="{Binding ActivityStatuses}" SelectedItem="{Binding SelectedActivityStatus}" />
+                  <TextBlock Text="Start date" Classes="fieldLabel" />
+                  <DatePicker SelectedDate="{Binding ActivityStartDate}" />
+                  <TextBlock Text="Due date" Classes="fieldLabel" />
+                  <DatePicker SelectedDate="{Binding ActivityDueDate}" />
+                  <TextBlock Text="Notes" Classes="fieldLabel" />
+                  <TextBox Text="{Binding ActivityDescription}" AcceptsReturn="True" Height="100" TextWrapping="Wrap" />
+                  <CheckBox Content="Mark as important" IsChecked="{Binding ActivityIsImportant}" />
+                  <TextBlock Text="{Binding ActivityFormError}" Classes="error" />
+                  <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,6,0,0">
+                    <Button Content="Save activity" Classes="primaryAction" Command="{Binding SaveActivityCommand}" />
+                    <Button Content="Cancel" Command="{Binding CancelActivityEditCommand}" />
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+
+              <Border Grid.Column="1" Classes="surfaceCard">
+                <StackPanel>
+                  <TextBlock Text="Activity list" Classes="sectionTitle" />
+                  <ComboBox ItemsSource="{Binding StatusFilters}" SelectedItem="{Binding ActivityStatusFilter}" Width="180" Margin="0,0,0,10" />
+                  <ItemsControl ItemsSource="{Binding FilteredActivities}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="models:ActivityItem">
+                        <Border Background="#EDF5FF" CornerRadius="14" Padding="14" Margin="0,0,0,8">
+                          <StackPanel Spacing="6">
+                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                            <TextBlock Classes="muted">
+                              <TextBlock.Inlines>
+                                <Run Text="{Binding Category}" />
+                                <Run Text=" · " />
+                                <Run Text="{Binding StartDate, StringFormat='{}{0:MMM dd}'}" />
+                                <Run Text=" → " />
+                                <Run Text="{Binding DueDate, StringFormat='{}{0:MMM dd}'}" />
+                              </TextBlock.Inlines>
+                            </TextBlock>
+                            <TextBlock Text="{Binding Description}" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding Status}" FontWeight="SemiBold" />
+                            <TextBlock Text="Important" IsVisible="{Binding IsImportant}" Foreground="#B45309" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                              <Button Content="Edit" Command="{Binding $parent[Window].DataContext.EditActivityCommand}" CommandParameter="{Binding}" />
+                              <Button Content="Toggle done" Command="{Binding $parent[Window].DataContext.ToggleActivityDoneCommand}" CommandParameter="{Binding}" />
+                              <Button Content="Delete" Command="{Binding $parent[Window].DataContext.DeleteActivityCommand}" CommandParameter="{Binding}" />
+                            </StackPanel>
+                          </StackPanel>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </Border>
+            </Grid>
+
+            <Grid IsVisible="{Binding ShowDiary}" ColumnDefinitions="430,*" ColumnSpacing="12">
+              <Border Classes="surfaceCard">
+                <StackPanel Spacing="8">
+                  <TextBlock Text="{Binding DiaryHeader}" Classes="sectionTitle" />
+                  <TextBlock Text="Title" Classes="fieldLabel" />
+                  <TextBox Text="{Binding DiaryTitle}" />
+                  <TextBlock Text="Entry date" Classes="fieldLabel" />
+                  <DatePicker SelectedDate="{Binding DiaryEntryDate}" />
+                  <TextBlock Text="Reflection" Classes="fieldLabel" />
+                  <TextBox Text="{Binding DiaryContent}" AcceptsReturn="True" Height="130" TextWrapping="Wrap" />
+                  <TextBlock Text="Tags (comma separated)" Classes="fieldLabel" />
+                  <TextBox Text="{Binding DiaryTags}" />
+                  <TextBlock Text="Mood (0-5)" Classes="fieldLabel" />
+                  <TextBox Text="{Binding DiaryMood}" />
+                  <TextBlock Text="{Binding DiaryFormError}" Classes="error" />
+                  <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,6,0,0">
+                    <Button Content="Save entry" Classes="primaryAction" Command="{Binding SaveDiaryCommand}" />
+                    <Button Content="Cancel" Command="{Binding CancelDiaryEditCommand}" />
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+
+              <Border Grid.Column="1" Classes="surfaceCard">
+                <StackPanel>
+                  <TextBlock Text="Recent entries" Classes="sectionTitle" />
+                  <TextBox Watermark="Search title or tag" Text="{Binding DiarySearch}" Margin="0,0,0,10" />
+                  <ItemsControl ItemsSource="{Binding FilteredDiaryEntries}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="models:DiaryEntry">
+                        <Border Background="#F5EEFF" CornerRadius="14" Padding="14" Margin="0,0,0,8">
+                          <StackPanel Spacing="6">
+                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding EntryDate, StringFormat='{}{0:MMM dd, yyyy}'}" Classes="muted" />
+                            <TextBlock Text="{Binding Mood, StringFormat='Mood {0}/5'}" Classes="muted" />
+                            <TextBlock Text="{Binding Content}" TextWrapping="Wrap" MaxHeight="80" />
+                            <TextBlock Text="{Binding TagsCsv, StringFormat='Tags: {0}'}" Classes="muted" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                              <Button Content="Edit" Command="{Binding $parent[Window].DataContext.EditDiaryCommand}" CommandParameter="{Binding}" />
+                              <Button Content="Delete" Command="{Binding $parent[Window].DataContext.DeleteDiaryCommand}" CommandParameter="{Binding}" />
+                            </StackPanel>
+                          </StackPanel>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </Border>
+            </Grid>
+
+            <Grid IsVisible="{Binding ShowAccount}" ColumnDefinitions="430,*" ColumnSpacing="12">
+              <Border Classes="surfaceCard">
+                <StackPanel Spacing="8">
+                  <TextBlock Text="Account Settings" Classes="sectionTitle" />
+                  <TextBlock Text="Change password" Classes="fieldLabel" />
+                  <TextBlock Text="Use your current password, then set a new one." Classes="muted" />
+
+                  <TextBlock Text="Current password" Classes="fieldLabel" />
+                  <TextBox Text="{Binding CurrentPassword}" PasswordChar="●" Watermark="Current password" />
+
+                  <TextBlock Text="New password" Classes="fieldLabel" />
+                  <TextBox Text="{Binding NewPassword}" PasswordChar="●" Watermark="Minimum 6 characters" />
+
+                  <TextBlock Text="Confirm new password" Classes="fieldLabel" />
+                  <TextBox Text="{Binding ConfirmNewPassword}" PasswordChar="●" Watermark="Confirm new password" />
+
+                  <TextBlock Text="{Binding PasswordChangeError}" Classes="error" />
+                  <TextBlock Text="{Binding PasswordChangeInfo}" Foreground="#0F766E" />
+
+                  <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,6,0,0">
+                    <Button Content="Update password" Classes="primaryAction" Command="{Binding ChangePasswordCommand}" />
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+
+              <Border Grid.Column="1" Classes="surfaceCard">
+                <StackPanel Spacing="10">
+                  <TextBlock Text="Security Tips" Classes="sectionTitle" />
+                  <TextBlock Text="Use a long password with letters, numbers, and symbols." Classes="muted" TextWrapping="Wrap" />
+                  <TextBlock Text="Do not reuse passwords from other apps." Classes="muted" TextWrapping="Wrap" />
+                  <TextBlock Text="Update your password periodically for better account security." Classes="muted" TextWrapping="Wrap" />
+                  <Border Background="#EAF6F5" CornerRadius="12" Padding="12" Margin="0,8,0,0">
+                    <StackPanel>
+                      <TextBlock Text="Signed in as" Classes="muted" />
+                      <TextBlock Text="{Binding CurrentUserEmail}" FontWeight="SemiBold" />
+                    </StackPanel>
+                  </Border>
+                </StackPanel>
+              </Border>
+            </Grid>
+
+            <Border Background="#FFFFFFCC" CornerRadius="12" Padding="10" Margin="0,8,0,0">
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <TextBlock Text="Status:" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding StatusMessage}" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </Grid>
+    </Grid>
+  </Grid>
+</Window>

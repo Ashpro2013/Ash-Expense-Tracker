@@ -1,84 +1,157 @@
-﻿@page "/dashboard"
+@page "/dashboard"
 @attribute [Authorize]
 
 <PageTitle>Dashboard</PageTitle>
 
-<div class="page-title">
+@using System.Globalization
+
+<div class="page-head">
     <div>
-        <MudText Typo="Typo.h4">Dashboard</MudText>
-        <MudText Typo="Typo.subtitle2" Class="page-subtitle">Your financial snapshot for this month.</MudText>
+        <FluentLabel Typo="Typography.PageTitle">Dashboard</FluentLabel>
+        <p class="page-subtitle">Income, expense, and balance overview with visual trends.</p>
+    </div>
+    <div class="page-actions">
+        <FluentButton Appearance="Appearance.Accent" OnClick="@(() => Navigation.NavigateTo("/income"))">Add income</FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="@(() => Navigation.NavigateTo("/expense"))">Add expense</FluentButton>
     </div>
 </div>
 
-<MudGrid>
-    <MudItem xs="12" md="4">
-        <MudPaper Class="stat-card" Style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);">
-            <MudText Typo="Typo.subtitle2" Class="stat-label">Income</MudText>
-            <MudText Typo="Typo.h4" Class="stat-value">@_incomeTotal.ToString("C")</MudText>
-        </MudPaper>
-    </MudItem>
-    <MudItem xs="12" md="4">
-        <MudPaper Class="stat-card" Style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);">
-            <MudText Typo="Typo.subtitle2" Class="stat-label">Expenses</MudText>
-            <MudText Typo="Typo.h4" Class="stat-value">@_expenseTotal.ToString("C")</MudText>
-        </MudPaper>
-    </MudItem>
-    <MudItem xs="12" md="4">
-        <MudPaper Class="stat-card" Style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);">
-            <MudText Typo="Typo.subtitle2" Class="stat-label">Balance</MudText>
-            <MudText Typo="Typo.h4" Class="stat-value">@_balance.ToString("C")</MudText>
-        </MudPaper>
-    </MudItem>
-</MudGrid>
+<div class="stats-grid">
+    <FluentCard class="stat-card">
+        <div class="stat-value">@_incomeTotal.ToString("C")</div>
+        <div class="stat-label">Total income</div>
+        <div class="stat-foot">Last 30 days</div>
+    </FluentCard>
+    <FluentCard class="stat-card">
+        <div class="stat-value">@_expenseTotal.ToString("C")</div>
+        <div class="stat-label">Total expense</div>
+        <div class="stat-foot">Last 30 days</div>
+    </FluentCard>
+    <FluentCard class="stat-card">
+        <div class="stat-value">@_balance.ToString("C")</div>
+        <div class="stat-label">Balance</div>
+        <div class="stat-foot">@(_balance >= 0 ? "Positive cash flow" : "Spending is above income")</div>
+    </FluentCard>
+</div>
 
-<MudPaper Class="pa-4" Style="margin-top: 24px;">
-    <MudText Typo="Typo.h6">Recent transactions</MudText>
-    <MudTable Items="_recentTransactions" Dense="true" Hover="true">
-        <HeaderContent>
-            <MudTh>Date</MudTh>
-            <MudTh>Category</MudTh>
-            <MudTh align="right">Amount</MudTh>
-            <MudTh>Note</MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd>@context.TransactionDate.ToLocalTime().ToString("MMM dd")</MudTd>
-            <MudTd>@context.Category?.Name</MudTd>
-            <MudTd align="right">@context.Amount.ToString("C")</MudTd>
-            <MudTd>@context.Note</MudTd>
-        </RowTemplate>
-        <NoRecordsContent>
-            <MudText>No transactions yet.</MudText>
-        </NoRecordsContent>
-    </MudTable>
-</MudPaper>
+<FluentCard class="panel-card">
+    <div class="panel-header">
+        <FluentLabel Typo="Typography.H5">Diary &amp; Activity Monitoring</FluentLabel>
+    </div>
+    <div class="monitor-grid">
+        <div class="monitor-card">
+            <div class="monitor-value">@_diaryEntriesCount</div>
+            <div class="monitor-label">Diary entries</div>
+            <FluentButton Appearance="Appearance.Outline" OnClick="@(() => Navigation.NavigateTo("/diary"))">Open diary</FluentButton>
+        </div>
+        <div class="monitor-card">
+            <div class="monitor-value">@_openActivitiesCount</div>
+            <div class="monitor-label">Open activities</div>
+            <FluentButton Appearance="Appearance.Outline" OnClick="@(() => Navigation.NavigateTo("/activities"))">Open activities</FluentButton>
+        </div>
+    </div>
+</FluentCard>
+
+<div class="split-grid">
+    <FluentCard class="panel-card">
+        <div class="panel-header">
+            <FluentLabel Typo="Typography.H5">Income vs Expense Graph</FluentLabel>
+        </div>
+        <div class="chart-stack">
+            <div class="chart-row">
+                <div class="chart-label">Income</div>
+                <div class="chart-track">
+                    <div class="chart-bar income-bar" style="width: @IncomeWidthCss"></div>
+                </div>
+                <div class="chart-value">@_incomeTotal.ToString("C")</div>
+            </div>
+            <div class="chart-row">
+                <div class="chart-label">Expense</div>
+                <div class="chart-track">
+                    <div class="chart-bar expense-bar" style="width: @ExpenseWidthCss"></div>
+                </div>
+                <div class="chart-value">@_expenseTotal.ToString("C")</div>
+            </div>
+            <div class="chart-row">
+                <div class="chart-label">Balance</div>
+                <div class="chart-track">
+                    <div class="chart-bar @( _balance >= 0 ? "balance-plus" : "balance-minus")" style="width: @BalanceWidthCss"></div>
+                </div>
+                <div class="chart-value">@_balance.ToString("C")</div>
+            </div>
+        </div>
+    </FluentCard>
+
+    <FluentCard class="panel-card">
+        <div class="panel-header">
+            <FluentLabel Typo="Typography.H5">Recent entries</FluentLabel>
+        </div>
+        <div class="list-stack">
+            @if (_recentEntries.Count == 0)
+            {
+                <p class="empty-state">No entries yet. Add income or expense to populate this list.</p>
+            }
+            else
+            {
+                @foreach (var entry in _recentEntries)
+                {
+                    <div class="list-item">
+                        <div>
+                            <div class="item-title">@entry.Title</div>
+                            <div class="item-meta">@entry.EntryDate.ToLocalTime().ToString("MMM dd, yyyy")</div>
+                        </div>
+                        <span class="status-pill @(entry.Type == FinanceEntryType.Income ? "income-pill" : "expense-pill")">
+                            @entry.Type · @entry.Amount.ToString("C")
+                        </span>
+                    </div>
+                }
+            }
+        </div>
+    </FluentCard>
+</div>
 
 @code {
-    [Inject] private ITransactionService TransactionService { get; set; } = default!;
+    [Inject] private FinanceEntryService FinanceEntryService { get; set; } = default!;
+    [Inject] private DiaryService DiaryService { get; set; } = default!;
+    [Inject] private ActivityService ActivityService { get; set; } = default!;
     [Inject] private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
 
+    private readonly List<FinanceEntry> _recentEntries = new();
     private decimal _incomeTotal;
     private decimal _expenseTotal;
     private decimal _balance;
-    private List<Transaction> _recentTransactions = new();
+    private int _diaryEntriesCount;
+    private int _openActivitiesCount;
 
     protected override async Task OnInitializedAsync()
     {
         var userId = await GetUserIdAsync();
-        var allTransactions = await TransactionService.GetAllAsync(userId);
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return;
+        }
 
-        var startOfMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
-        var monthTransactions = allTransactions.Where(t => t.TransactionDate >= startOfMonth).ToList();
+        var entries = await FinanceEntryService.GetAllAsync(userId);
+        var periodStart = DateTime.Today.AddDays(-30);
+        var monthlyEntries = entries.Where(entry => entry.EntryDate.Date >= periodStart).ToList();
 
-        _incomeTotal = monthTransactions
-            .Where(t => t.Category?.Type == CategoryType.Income)
-            .Sum(t => t.Amount);
+        _incomeTotal = monthlyEntries
+            .Where(entry => entry.Type == FinanceEntryType.Income)
+            .Sum(entry => entry.Amount);
 
-        _expenseTotal = monthTransactions
-            .Where(t => t.Category?.Type == CategoryType.Expense)
-            .Sum(t => t.Amount);
+        _expenseTotal = monthlyEntries
+            .Where(entry => entry.Type == FinanceEntryType.Expense)
+            .Sum(entry => entry.Amount);
 
         _balance = _incomeTotal - _expenseTotal;
-        _recentTransactions = allTransactions.Take(6).ToList();
+        _recentEntries.AddRange(entries.Take(7));
+
+        var diaryEntries = await DiaryService.GetAllAsync(userId);
+        _diaryEntriesCount = diaryEntries.Count;
+
+        var activities = await ActivityService.GetAllAsync(userId);
+        _openActivitiesCount = activities.Count(activity => activity.Status != ActivityStatus.Done);
     }
 
     private async Task<string> GetUserIdAsync()
@@ -86,4 +159,39 @@
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         return authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
     }
+
+    private decimal IncomeWidth
+    {
+        get
+        {
+            var maxValue = MaxValue;
+            return maxValue == 0 ? 0 : (_incomeTotal / maxValue) * 100m;
+        }
+    }
+
+    private decimal ExpenseWidth
+    {
+        get
+        {
+            var maxValue = MaxValue;
+            return maxValue == 0 ? 0 : (_expenseTotal / maxValue) * 100m;
+        }
+    }
+
+    private decimal BalanceWidth
+    {
+        get
+        {
+            var maxValue = MaxValue;
+            return maxValue == 0 ? 0 : (Math.Abs(_balance) / maxValue) * 100m;
+        }
+    }
+
+    private decimal MaxValue => new[] { _incomeTotal, _expenseTotal, Math.Abs(_balance) }.Max();
+
+    private string IncomeWidthCss => $"{IncomeWidth.ToString("0.##", CultureInfo.InvariantCulture)}%";
+
+    private string ExpenseWidthCss => $"{ExpenseWidth.ToString("0.##", CultureInfo.InvariantCulture)}%";
+
+    private string BalanceWidthCss => $"{BalanceWidth.ToString("0.##", CultureInfo.InvariantCulture)}%";
 }

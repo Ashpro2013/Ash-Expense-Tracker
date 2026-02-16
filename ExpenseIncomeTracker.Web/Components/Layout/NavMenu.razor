@@ -1,13 +1,14 @@
-﻿<div class="brand">
-    <MudText Typo="Typo.h6" Class="brand-title">Ashpro</MudText>
-    <MudText Typo="Typo.subtitle2" Class="brand-subtitle">Expense And Income Tracker</MudText>
-</div>
+<nav class="nav-shell" aria-label="Side navigation">
+    <div class="brand">
+        <div class="brand-title">CashTrack Pro</div>
+        <div class="brand-subtitle">Finance, Diary &amp; Activity</div>
+    </div>
 
-<MudNavMenu Class="nav-menu">
-    <MudNavLink Href="dashboard" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
-    <MudNavLink Href="transactions" Icon="@Icons.Material.Filled.ReceiptLong">Transactions</MudNavLink>
-    <MudNavGroup Title="Categories" Icon="@Icons.Material.Filled.Category" Expanded="true">
-        <MudNavLink Href="categories/income" Icon="@Icons.Material.Filled.TrendingUp">Income</MudNavLink>
-        <MudNavLink Href="categories/expense" Icon="@Icons.Material.Filled.TrendingDown">Expense</MudNavLink>
-    </MudNavGroup>
-</MudNavMenu>
+    <div class="nav-menu">
+        <NavLink href="/dashboard" Match="NavLinkMatch.All" class="nav-link">Dashboard</NavLink>
+        <NavLink href="/income" class="nav-link">Income</NavLink>
+        <NavLink href="/expense" class="nav-link">Expense</NavLink>
+        <NavLink href="/activities" class="nav-link">Activity</NavLink>
+        <NavLink href="/diary" class="nav-link">Diary</NavLink>
+    </div>
+</nav>

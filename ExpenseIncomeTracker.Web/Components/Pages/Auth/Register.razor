@@ -3,112 +3,51 @@
 @rendermode InteractiveServer
 @layout ExpenseIncomeTracker.Web.Components.Layout.AuthLayout
 
-<PageTitle>Sign up</PageTitle>
+<PageTitle>Create account</PageTitle>
 
 @using System.Text.Json.Serialization
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
 
-<MudPaper Elevation="0" Style="padding: 2rem;">
+<div class="auth-form">
+    <div class="auth-form-header">
+        <FluentLabel Typo="Typography.PageTitle">Create your account</FluentLabel>
+        <p class="page-subtitle">Start a new diary and plan what matters.</p>
+    </div>
 
-    <MudStack Spacing="3">
-        <MudStack Spacing="1">
-            <MudText Typo="Typo.h4" Style="font-weight: 600;">
-                Create your account
-            </MudText>
-            <MudText Typo="Typo.subtitle1" Color="Color.Secondary">
-                Start tracking income and expenses in minutes.
-            </MudText>
-        </MudStack>
+    <EditForm Model="_model" OnValidSubmit="SubmitRegistration">
+        <DataAnnotationsValidator />
 
-        <!-- REGISTER FORM -->
-        <MudForm @ref="_form">
-            <MudStack Spacing="3">
-                <!-- EMAIL -->
-                <MudTextField T="string"
-                              @bind-Value="_model.Email"
-                              Label="Email"
-                              Variant="Variant.Outlined"
-                              FullWidth="true"
-                              Required="true"
-                              RequiredError="Email is required"
-                              Immediate="true" />
+        <div class="form-stack">
+            <FluentTextField Label="Email" TextFieldType="TextFieldType.Email" Required="true" @bind-Value="_model.Email" />
+            <FluentTextField Label="Password" TextFieldType="TextFieldType.Password" Required="true" @bind-Value="_model.Password" />
+            <FluentTextField Label="Confirm password" TextFieldType="TextFieldType.Password" Required="true" @bind-Value="_model.ConfirmPassword" />
 
-                <!-- PASSWORD -->
-                <MudTextField T="string"
-                              @bind-Value="_model.Password"
-                              Label="Password"
-                              Variant="Variant.Outlined"
-                              InputType="InputType.Password"
-                              FullWidth="true"
-                              Required="true"
-                              RequiredError="Password is required"
-                              Immediate="true" />
+            @if (!string.IsNullOrWhiteSpace(Error))
+            {
+                <div class="form-error">@Error</div>
+            }
 
-                <!-- CONFIRM PASSWORD -->
-                <MudTextField T="string"
-                              @bind-Value="_model.ConfirmPassword"
-                              Label="Confirm Password"
-                              Variant="Variant.Outlined"
-                              InputType="InputType.Password"
-                              FullWidth="true"
-                              Required="true"
-                              RequiredError="Confirm password is required"
-                              Immediate="true" />
+            <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit" Loading="_submitting">Create account</FluentButton>
+        </div>
+    </EditForm>
 
-                <!-- ERROR MESSAGE -->
-                @if (!string.IsNullOrWhiteSpace(Error))
-                {
-                    <MudAlert Severity="Severity.Error"
-                              Variant="Variant.Outlined">
-                        @Error
-                    </MudAlert>
-                }
+    <div class="auth-footer">
+        <span>Already have an account?</span>
+        <FluentButton Appearance="Appearance.Outline" OnClick="@(() => Navigation.NavigateTo("/login"))">Sign in</FluentButton>
+    </div>
+</div>
 
-                <!-- SUBMIT -->
-                <MudButton ButtonType="ButtonType.Button"
-                           Color="Color.Secondary"
-                           Variant="Variant.Filled"
-                           FullWidth="true"
-                           Size="Size.Large"
-                           Disabled="@_submitting"
-                           OnClick="SubmitRegister">
-                    <span>Sign up</span>
-                </MudButton>
-            </MudStack>
-        </MudForm>
-
-        <!-- FOOTER -->
-        <MudText Typo="Typo.body2" Align="Align.Center" Color="Color.Secondary">
-            Already registered?
-            <MudLink Href="/login">Sign in</MudLink>
-        </MudText>
-    </MudStack>
-
-</MudPaper>
-
-@code {
-    private MudForm? _form;
+@code
+{
     private RegisterModel _model = new();
     private bool _submitting;
-
 
     [SupplyParameterFromQuery(Name = "error")]
     public string? Error { get; set; }
 
-    private async Task SubmitRegister()
+    private async Task SubmitRegistration()
     {
-        if (_form is null)
-        {
-            return;
-        }
-
-        await _form.Validate();
-        if (!_form.IsValid)
-        {
-            return;
-        }
-
         _submitting = true;
         Error = null;
 
@@ -129,8 +68,13 @@
 
     private sealed class RegisterModel
     {
+        [Required]
         public string Email { get; set; } = string.Empty;
+
+        [Required]
         public string Password { get; set; } = string.Empty;
+
+        [Required]
         public string ConfirmPassword { get; set; } = string.Empty;
     }
 

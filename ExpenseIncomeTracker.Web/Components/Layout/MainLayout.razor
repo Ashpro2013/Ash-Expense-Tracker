@@ -1,47 +1,42 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 @inject NavigationManager Navigation
 
-<MudThemeProvider Theme="_theme" />
-<MudDialogProvider />
-<MudSnackbarProvider />
-<MudPopoverProvider />
-<MudLayout>
-    <MudAppBar Elevation="0" Color="Color.Default" Class="appbar">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Primary" Edge="Edge.Start" OnClick="ToggleDrawer" />
-        <MudText Typo="Typo.h6" Class="app-title">Expense &amp; Income Tracker</MudText>
-        <MudSpacer />
-        <AuthorizeView>
-            <Authorized>
-                <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined" Style="margin-right: 12px;">
-                    @context.User.Identity?.Name
-                </MudChip>
-                <form method="post" action="/account/logout" @formname="logout" style="display: inline;">
-                    <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Logout</MudButton>
-                </form>
-            </Authorized>
-            <NotAuthorized>
-                <MudButton Href="/login" Color="Color.Primary" Variant="Variant.Text">Sign in</MudButton>
-                <MudButton Href="/register" Color="Color.Secondary" Variant="Variant.Filled">Sign up</MudButton>
-            </NotAuthorized>
-        </AuthorizeView>
-    </MudAppBar>
+<FluentToastProvider />
+<FluentDialogProvider />
+<FluentTooltipProvider />
+<FluentMessageBarProvider />
 
-    <MudDrawer @bind-Open="_drawerOpen" Elevation="1" Variant="DrawerVariant.Responsive" Class="drawer">
-        <NavMenu />
-    </MudDrawer>
+<div class="app-shell">
+    <header class="app-header">
+        <div class="header-left">
+            <div class="logo-mark">EI</div>
+            <div>
+                <div class="app-title">Finance, Diary &amp; Activity Manager</div>
+                <div class="app-subtitle">Track cash flow and daily progress in one workspace.</div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <AuthorizeView>
+                <Authorized>
+                    <div class="user-chip">@context.User.Identity?.Name</div>
+                    <form method="post" action="/account/logout" @formname="logout" style="display: inline;">
+                        <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Sign out</FluentButton>
+                    </form>
+                </Authorized>
+                <NotAuthorized>
+                    <FluentButton Appearance="Appearance.Accent" OnClick="@(() => Navigation.NavigateTo("/login"))">Sign in</FluentButton>
+                    <FluentButton Appearance="Appearance.Outline" OnClick="@(() => Navigation.NavigateTo("/register"))">Sign up</FluentButton>
+                </NotAuthorized>
+            </AuthorizeView>
+        </div>
+    </header>
 
-    <MudMainContent Class="main-content">
-        @Body
-    </MudMainContent>
-</MudLayout>
-
-@code {
-    private bool _drawerOpen = true;
-    private readonly MudTheme _theme = ExpenseIncomeTracker.Web.Theme.AppTheme.Create();
-
-    private void ToggleDrawer()
-    {
-        _drawerOpen = !_drawerOpen;
-    }
-
-}
+    <div class="app-body">
+        <aside class="side-rail">
+            <NavMenu />
+        </aside>
+        <main class="main-content">
+            @Body
+        </main>
+    </div>
+</div>

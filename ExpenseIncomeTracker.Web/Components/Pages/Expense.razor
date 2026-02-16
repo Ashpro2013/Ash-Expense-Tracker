@@ -1,0 +1,199 @@
+@page "/expense"
+@attribute [Authorize]
+
+<PageTitle>Expense Entry</PageTitle>
+
+<div class="page-head">
+    <div>
+        <FluentLabel Typo="Typography.PageTitle">Expense Entry</FluentLabel>
+        <p class="page-subtitle">Track spending and keep your cash flow under control.</p>
+    </div>
+</div>
+
+<div class="two-column">
+    <FluentCard class="panel-card">
+        <div class="panel-header">
+            <FluentLabel Typo="Typography.H5">@(_editingId is null ? "Add expense" : "Edit expense")</FluentLabel>
+        </div>
+        <EditForm Model="_form" OnValidSubmit="SaveEntry">
+            <DataAnnotationsValidator />
+            <div class="form-stack">
+                <FluentTextField Label="Title" Required="true" @bind-Value="_form.Title" />
+                <FluentTextField Label="Amount" Required="true" @bind-Value="_form.Amount" />
+                <FluentDatePicker Label="Entry date" @bind-Value="_form.EntryDate" />
+                <FluentTextArea Label="Note" Rows="4" @bind-Value="_form.Note" />
+
+                @if (!string.IsNullOrWhiteSpace(_formError))
+                {
+                    <div class="form-error">@_formError</div>
+                }
+
+                <div class="form-actions">
+                    <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit" Loading="_saving">Save expense</FluentButton>
+                    @if (_editingId is not null)
+                    {
+                        <FluentButton Appearance="Appearance.Outline" OnClick="ResetForm">Cancel</FluentButton>
+                    }
+                </div>
+            </div>
+        </EditForm>
+    </FluentCard>
+
+    <FluentCard class="panel-card">
+        <div class="panel-header">
+            <FluentLabel Typo="Typography.H5">Expense history</FluentLabel>
+            <div class="summary-pill">Total @_totalExpense.ToString("C")</div>
+        </div>
+        <div class="list-stack">
+            @if (_entries.Count == 0)
+            {
+                <p class="empty-state">No expense entries yet.</p>
+            }
+            else
+            {
+                @foreach (var entry in _entries)
+                {
+                    <div class="entry-card">
+                        <div class="entry-info">
+                            <div class="item-title">@entry.Title</div>
+                            <div class="item-meta">@entry.EntryDate.ToLocalTime().ToString("MMM dd, yyyy") · @entry.Amount.ToString("C")</div>
+                            <div class="item-meta">@(!string.IsNullOrWhiteSpace(entry.Note) ? entry.Note : "No note")</div>
+                        </div>
+                        <div class="entry-actions">
+                            <FluentButton Appearance="Appearance.Outline" OnClick="@(() => StartEdit(entry))">Edit</FluentButton>
+                            <FluentButton Appearance="Appearance.Outline" OnClick="@(() => DeleteEntry(entry))">Delete</FluentButton>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </FluentCard>
+</div>
+
+@code {
+    [Inject] private FinanceEntryService FinanceEntryService { get; set; } = default!;
+    [Inject] private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+
+    private string _userId = string.Empty;
+    private readonly List<FinanceEntry> _entries = new();
+    private string? _editingId;
+    private DateTime _editingCreatedAt = DateTime.UtcNow;
+    private bool _saving;
+    private string? _formError;
+    private decimal _totalExpense;
+    private ExpenseForm _form = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _userId = await GetUserIdAsync();
+        await LoadEntries();
+    }
+
+    private async Task LoadEntries()
+    {
+        _entries.Clear();
+        if (string.IsNullOrWhiteSpace(_userId))
+        {
+            return;
+        }
+
+        _entries.AddRange(await FinanceEntryService.GetByTypeAsync(_userId, FinanceEntryType.Expense));
+        _totalExpense = _entries.Sum(entry => entry.Amount);
+    }
+
+    private async Task SaveEntry()
+    {
+        _formError = null;
+
+        if (string.IsNullOrWhiteSpace(_form.Title))
+        {
+            _formError = "Title is required.";
+            return;
+        }
+
+        if (!decimal.TryParse(_form.Amount, out var amount) || amount <= 0)
+        {
+            _formError = "Amount must be greater than 0.";
+            return;
+        }
+
+        _saving = true;
+
+        var entry = new FinanceEntry
+        {
+            Id = _editingId,
+            UserId = _userId,
+            Type = FinanceEntryType.Expense,
+            Title = _form.Title.Trim(),
+            Amount = amount,
+            EntryDate = _form.EntryDate ?? DateTime.Today,
+            Note = string.IsNullOrWhiteSpace(_form.Note) ? null : _form.Note.Trim(),
+            CreatedAt = _editingCreatedAt
+        };
+
+        if (_editingId is null)
+        {
+            await FinanceEntryService.CreateAsync(entry);
+        }
+        else
+        {
+            await FinanceEntryService.UpdateAsync(entry);
+        }
+
+        await LoadEntries();
+        ResetForm();
+        _saving = false;
+    }
+
+    private void StartEdit(FinanceEntry entry)
+    {
+        _editingId = entry.Id;
+        _editingCreatedAt = entry.CreatedAt;
+        _form = new ExpenseForm
+        {
+            Title = entry.Title,
+            Amount = entry.Amount.ToString("0.##"),
+            EntryDate = entry.EntryDate,
+            Note = entry.Note
+        };
+    }
+
+    private async Task DeleteEntry(FinanceEntry entry)
+    {
+        if (string.IsNullOrWhiteSpace(entry.Id))
+        {
+            return;
+        }
+
+        await FinanceEntryService.DeleteAsync(entry.Id, _userId);
+        await LoadEntries();
+        ResetForm();
+    }
+
+    private void ResetForm()
+    {
+        _editingId = null;
+        _editingCreatedAt = DateTime.UtcNow;
+        _formError = null;
+        _form = new ExpenseForm();
+    }
+
+    private async Task<string> GetUserIdAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        return authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+    }
+
+    private sealed class ExpenseForm
+    {
+        [Required]
+        public string Title { get; set; } = string.Empty;
+
+        [Required]
+        public string Amount { get; set; } = string.Empty;
+
+        public DateTime? EntryDate { get; set; } = DateTime.Today;
+
+        public string? Note { get; set; }
+    }
+}

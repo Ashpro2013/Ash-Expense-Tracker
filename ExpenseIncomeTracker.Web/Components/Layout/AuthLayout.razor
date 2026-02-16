@@ -1,37 +1,22 @@
 @inherits LayoutComponentBase
 
-<MudThemeProvider Theme="_theme" />
-<MudDialogProvider />
-<MudSnackbarProvider />
-
-<MudContainer MaxWidth="MaxWidth.False" Style="min-height: 100vh; padding: 0;">
-    <MudGrid Spacing="0" Style="min-height: 100vh;">
-        <!-- LEFT PANEL: HERO SECTION -->
-        <MudItem xs="12" md="6" Style="display: flex; align-items: center; background: linear-gradient(135deg, var(--mud-palette-primary) 0%, var(--mud-palette-primary-darken) 100%);">
-            <MudContainer MaxWidth="MaxWidth.Small">
-                <MudText Typo="Typo.h2" Style="color: white; margin-bottom: 1rem; font-weight: 700;">
-                    Make every riyal count.
-                </MudText>
-                <MudText Typo="Typo.subtitle1" Style="color: rgba(255, 255, 255, 0.9); margin-bottom: 2rem;">
-                    Track income, control expenses, and build a clear path to your goals.
-                </MudText>
-                <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap">
-                    <MudChip T="string" Variant="Variant.Outlined" Color="Color.Secondary">Smart categories</MudChip>
-                    <MudChip T="string" Variant="Variant.Outlined" Color="Color.Secondary">Monthly insights</MudChip>
-                    <MudChip T="string" Variant="Variant.Outlined" Color="Color.Secondary">Secure access</MudChip>
-                </MudStack>
-            </MudContainer>
-        </MudItem>
-
-        <!-- RIGHT PANEL: AUTH FORM -->
-        <MudItem xs="12" md="6" Style="display: flex; align-items: center; justify-content: center;">
-            <MudContainer MaxWidth="MaxWidth.Small" Style="padding: 2rem;">
-                @Body
-            </MudContainer>
-        </MudItem>
-    </MudGrid>
-</MudContainer>
-
-@code {
-    private readonly MudTheme _theme = ExpenseIncomeTracker.Web.Theme.AppTheme.Create();
-}
+<div class="auth-shell">
+    <section class="auth-hero">
+        <div class="auth-hero-content">
+            <h1 class="hero-title">Reflect daily. Move intentionally.</h1>
+            <p class="hero-subtitle">
+                A calm space to capture memories and keep your next actions visible.
+            </p>
+            <div class="hero-badges">
+                <span class="hero-pill">Daily reflections</span>
+                <span class="hero-pill">Focused activity plans</span>
+                <span class="hero-pill">Private by design</span>
+            </div>
+        </div>
+    </section>
+    <section class="auth-panel">
+        <FluentCard class="auth-card">
+            @Body
+        </FluentCard>
+    </section>
+</div>

@@ -3,6 +3,14 @@
   "WorkspaceRootPath": "C:\\Mac\\Home\\Documents\\New project\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{04F410E9-9585-4BC1-B168-2D9474266558}|ExpenseIncomeTracker.Tests\\ExpenseIncomeTracker.Tests.csproj|c:\\mac\\home\\documents\\new project\\expenseincometracker.tests\\services\\categoryservicetests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{04F410E9-9585-4BC1-B168-2D9474266558}|ExpenseIncomeTracker.Tests\\ExpenseIncomeTracker.Tests.csproj|solutionrelative:expenseincometracker.tests\\services\\categoryservicetests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{04F410E9-9585-4BC1-B168-2D9474266558}|ExpenseIncomeTracker.Tests\\ExpenseIncomeTracker.Tests.csproj|c:\\mac\\home\\documents\\new project\\expenseincometracker.tests\\helpers\\testdbcontextfactory.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{04F410E9-9585-4BC1-B168-2D9474266558}|ExpenseIncomeTracker.Tests\\ExpenseIncomeTracker.Tests.csproj|solutionrelative:expenseincometracker.tests\\helpers\\testdbcontextfactory.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{AC1E1771-359D-4340-B785-64563590E2A6}|ExpenseIncomeTracker.Web\\ExpenseIncomeTracker.Web.csproj|c:\\mac\\home\\documents\\new project\\expenseincometracker.web\\components\\pages\\auth\\login.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
       "RelativeMoniker": "D:0:0:{AC1E1771-359D-4340-B785-64563590E2A6}|ExpenseIncomeTracker.Web\\ExpenseIncomeTracker.Web.csproj|solutionrelative:expenseincometracker.web\\components\\pages\\auth\\login.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     }
@@ -39,6 +47,32 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
+              "Title": "CategoryServiceTests.cs",
+              "DocumentMoniker": "C:\\Mac\\Home\\Documents\\New project\\ExpenseIncomeTracker.Tests\\Services\\CategoryServiceTests.cs",
+              "RelativeDocumentMoniker": "ExpenseIncomeTracker.Tests\\Services\\CategoryServiceTests.cs",
+              "ToolTip": "C:\\Mac\\Home\\Documents\\New project\\ExpenseIncomeTracker.Tests\\Services\\CategoryServiceTests.cs",
+              "RelativeToolTip": "ExpenseIncomeTracker.Tests\\Services\\CategoryServiceTests.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-02-07T04:00:54.927Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "TestDbContextFactory.cs",
+              "DocumentMoniker": "C:\\Mac\\Home\\Documents\\New project\\ExpenseIncomeTracker.Tests\\Helpers\\TestDbContextFactory.cs",
+              "RelativeDocumentMoniker": "ExpenseIncomeTracker.Tests\\Helpers\\TestDbContextFactory.cs",
+              "ToolTip": "C:\\Mac\\Home\\Documents\\New project\\ExpenseIncomeTracker.Tests\\Helpers\\TestDbContextFactory.cs",
+              "RelativeToolTip": "ExpenseIncomeTracker.Tests\\Helpers\\TestDbContextFactory.cs",
+              "ViewState": "AgIAABAAAAAAAAAAAAAgwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-02-07T04:00:32.741Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
               "Title": "Login.razor",
               "DocumentMoniker": "C:\\Mac\\Home\\Documents\\New project\\ExpenseIncomeTracker.Web\\Components\\Pages\\Auth\\Login.razor",
               "RelativeDocumentMoniker": "ExpenseIncomeTracker.Web\\Components\\Pages\\Auth\\Login.razor",

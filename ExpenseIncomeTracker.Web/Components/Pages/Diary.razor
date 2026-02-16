@@ -1,0 +1,302 @@
+@page "/diary"
+@attribute [Authorize]
+
+<PageTitle>Diary</PageTitle>
+
+@using Microsoft.AspNetCore.WebUtilities
+
+<div class="page-head">
+    <div>
+        <FluentLabel Typo="Typography.PageTitle">Diary</FluentLabel>
+        <p class="page-subtitle">Capture moments, ideas, and reflections.</p>
+    </div>
+    <div class="page-actions">
+        <FluentButton Appearance="Appearance.Accent" OnClick="NewEntry">New entry</FluentButton>
+    </div>
+</div>
+
+<div class="two-column">
+    <FluentCard class="panel-card">
+        <div class="panel-header">
+            <FluentLabel Typo="Typography.H5">@(_editingId is null ? "New entry" : "Edit entry")</FluentLabel>
+        </div>
+        <EditForm Model="_form" OnValidSubmit="SaveEntry">
+            <DataAnnotationsValidator />
+            <div class="form-stack">
+                <FluentTextField Label="Title" Required="true" @bind-Value="_form.Title" />
+                <FluentDatePicker Label="Entry date" @bind-Value="_form.EntryDate" />
+                <FluentTextArea Label="Reflection" Rows="6" @bind-Value="_form.Content" />
+                <FluentTextField Label="Tags (comma separated)" @bind-Value="_form.Tags" />
+                <FluentTextField Label="Mood (1-5)" @bind-Value="_form.Mood" />
+
+                @if (!string.IsNullOrWhiteSpace(_formError))
+                {
+                    <div class="form-error">@_formError</div>
+                }
+
+                <div class="form-actions">
+                    <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit" Loading="_saving">Save entry</FluentButton>
+                    @if (_editingId is not null)
+                    {
+                        <FluentButton Appearance="Appearance.Outline" OnClick="ResetForm">Cancel</FluentButton>
+                    }
+                </div>
+            </div>
+        </EditForm>
+    </FluentCard>
+
+    <FluentCard class="panel-card">
+        <div class="panel-header">
+            <FluentLabel Typo="Typography.H5">Recent entries</FluentLabel>
+            <FluentTextField Placeholder="Search title or tag" @bind-Value="_search" />
+        </div>
+        <div class="list-stack">
+            @if (FilteredEntries.Count == 0)
+            {
+                <p class="empty-state">No entries yet. Start with a short note.</p>
+            }
+            else
+            {
+                @foreach (var entry in FilteredEntries)
+                {
+                    <div class="entry-card">
+                        <div class="entry-info">
+                            <div class="item-title">@entry.Title</div>
+                            <div class="item-meta">@entry.EntryDate.ToLocalTime().ToString("MMM dd, yyyy") · Mood @entry.Mood/5</div>
+                            <div class="item-meta">@Preview(entry.Content)</div>
+                            @if (entry.Tags.Count > 0)
+                            {
+                                <div class="tag-row">
+                                    @foreach (var tag in entry.Tags.Take(4))
+                                    {
+                                        <span class="tag">@tag</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                        <div class="entry-actions">
+                            <FluentButton Appearance="Appearance.Outline" OnClick="@(() => StartEdit(entry))">Edit</FluentButton>
+                            <FluentButton Appearance="Appearance.Outline" OnClick="@(() => DeleteEntry(entry))">Delete</FluentButton>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </FluentCard>
+</div>
+
+@code {
+    [Inject] private DiaryService DiaryService { get; set; } = default!;
+    [Inject] private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    private string _userId = string.Empty;
+    private readonly List<DiaryEntry> _entries = new();
+    private string? _editingId;
+    private DateTime? _editingCreatedAt;
+    private bool _saving;
+    private string? _formError;
+    private string _search = string.Empty;
+    private DiaryForm _form = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _userId = await GetUserIdAsync();
+        await LoadEntries();
+        ApplyQueryEdit();
+    }
+
+    protected override void OnParametersSet()
+    {
+        ApplyQueryEdit();
+    }
+
+    private void ApplyQueryEdit()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        query.TryGetValue("entryId", out var entryIdValues);
+        var entryId = entryIdValues.FirstOrDefault();
+
+        if (!string.IsNullOrWhiteSpace(entryId))
+        {
+            var entry = _entries.FirstOrDefault(item => item.Id == entryId);
+            if (entry is not null)
+            {
+                StartEdit(entry);
+            }
+        }
+    }
+
+    private async Task LoadEntries()
+    {
+        _entries.Clear();
+        if (string.IsNullOrWhiteSpace(_userId))
+        {
+            return;
+        }
+
+        _entries.AddRange(await DiaryService.GetAllAsync(_userId));
+    }
+
+    private List<DiaryEntry> FilteredEntries
+        => _entries
+            .Where(entry => MatchesSearch(entry, _search))
+            .ToList();
+
+    private static bool MatchesSearch(DiaryEntry entry, string search)
+    {
+        if (string.IsNullOrWhiteSpace(search))
+        {
+            return true;
+        }
+
+        var value = search.Trim();
+        return entry.Title.Contains(value, StringComparison.OrdinalIgnoreCase)
+            || entry.Content.Contains(value, StringComparison.OrdinalIgnoreCase)
+            || entry.Tags.Any(tag => tag.Contains(value, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private void NewEntry()
+    {
+        ResetForm();
+    }
+
+    private void StartEdit(DiaryEntry entry)
+    {
+        _editingId = entry.Id;
+        _editingCreatedAt = entry.CreatedAt;
+        _form = new DiaryForm
+        {
+            Title = entry.Title,
+            Content = entry.Content,
+            EntryDate = entry.EntryDate,
+            Mood = entry.Mood == 0 ? "" : entry.Mood.ToString(),
+            Tags = string.Join(", ", entry.Tags)
+        };
+    }
+
+    private async Task SaveEntry()
+    {
+        if (string.IsNullOrWhiteSpace(_userId))
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_form.Title) || string.IsNullOrWhiteSpace(_form.Content))
+        {
+            _formError = "Title and reflection are required.";
+            return;
+        }
+
+        _formError = null;
+        _saving = true;
+
+        var moodValue = 0;
+        if (!string.IsNullOrWhiteSpace(_form.Mood) && !int.TryParse(_form.Mood, out moodValue))
+        {
+            _formError = "Mood must be a number between 1 and 5.";
+            _saving = false;
+            return;
+        }
+
+        if (moodValue < 0 || moodValue > 5)
+        {
+            _formError = "Mood must be between 1 and 5.";
+            _saving = false;
+            return;
+        }
+
+        var entry = new DiaryEntry
+        {
+            Id = _editingId,
+            UserId = _userId,
+            Title = _form.Title.Trim(),
+            Content = _form.Content.Trim(),
+            EntryDate = _form.EntryDate ?? DateTime.Today,
+            Mood = moodValue,
+            Tags = ParseTags(_form.Tags),
+            CreatedAt = _editingCreatedAt ?? DateTime.UtcNow
+        };
+
+        if (_editingId is null)
+        {
+            await DiaryService.CreateAsync(entry);
+        }
+        else
+        {
+            await DiaryService.UpdateAsync(entry);
+        }
+
+        await LoadEntries();
+        ResetForm();
+        _saving = false;
+    }
+
+    private async Task DeleteEntry(DiaryEntry entry)
+    {
+        if (string.IsNullOrWhiteSpace(entry.Id))
+        {
+            return;
+        }
+
+        await DiaryService.DeleteAsync(entry.Id, _userId);
+        await LoadEntries();
+        ResetForm();
+    }
+
+    private void ResetForm()
+    {
+        _editingId = null;
+        _editingCreatedAt = null;
+        _form = new DiaryForm();
+        _formError = null;
+    }
+
+    private static List<string> ParseTags(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return new List<string>();
+        }
+
+        return raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(tag => !string.IsNullOrWhiteSpace(tag))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static string Preview(string? content)
+    {
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            return "No reflection yet.";
+        }
+
+        const int maxLength = 120;
+        return content.Length <= maxLength
+            ? content
+            : string.Concat(content.AsSpan(0, maxLength), "...");
+    }
+
+    private async Task<string> GetUserIdAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        return authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+    }
+
+    private sealed class DiaryForm
+    {
+        [Required]
+        public string Title { get; set; } = string.Empty;
+
+        [Required]
+        public string Content { get; set; } = string.Empty;
+
+        public DateTime? EntryDate { get; set; } = DateTime.Today;
+
+        public string Tags { get; set; } = string.Empty;
+
+        public string Mood { get; set; } = string.Empty;
+    }
+}

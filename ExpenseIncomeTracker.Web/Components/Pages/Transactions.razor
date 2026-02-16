@@ -1,187 +1,233 @@
-@page "/transactions"
+@page "/activities"
 @attribute [Authorize]
 
-<PageTitle>Transactions</PageTitle>
+<PageTitle>Activity Monitoring</PageTitle>
 
-<div class="page-title">
+<div class="page-head">
     <div>
-        <MudText Typo="Typo.h4">Transactions</MudText>
-        <MudText Typo="Typo.subtitle2" Class="page-subtitle">Track every income and expense entry.</MudText>
+        <FluentLabel Typo="Typography.PageTitle">Activity Monitoring</FluentLabel>
+        <p class="page-subtitle">Monitor planned work, in-progress items, and completions.</p>
+    </div>
+    <div class="page-actions">
+        <FluentButton Appearance="Appearance.Accent" OnClick="NewActivity">New activity</FluentButton>
     </div>
 </div>
 
-<MudGrid>
-    <MudItem xs="12" lg="4">
-        <MudPaper Class="pa-4">
-            <MudText Typo="Typo.h6">@(_form.Id == 0 ? "Add transaction" : "Edit transaction")</MudText>
-            <MudDivider Class="my-2" />
-
-            <EditForm Model="_form" OnValidSubmit="SaveTransaction" formname="transaction-form">
-                <DataAnnotationsValidator />
-                <MudDatePicker @bind-Date="_form.TransactionDate" Label="Date" Variant="Variant.Outlined" />
-                <MudNumericField @bind-Value="_form.Amount" Label="Amount" Variant="Variant.Outlined" FullWidth="true" Required="true" />
-                <MudSelect T="int" @bind-Value="_form.CategoryId" Label="Category" Variant="Variant.Outlined" FullWidth="true">
-                    @foreach (var category in _categories)
-                    {
-                        <MudSelectItem Value="@category.Id">@category.Name (@category.Type)</MudSelectItem>
-                    }
-                </MudSelect>
-                <MudTextField @bind-Value="_form.Note" Label="Note" Variant="Variant.Outlined" FullWidth="true" Lines="3" />
+<div class="two-column">
+    <FluentCard class="panel-card">
+        <div class="panel-header">
+            <FluentLabel Typo="Typography.H5">@(_editingId is null ? "Plan activity" : "Edit activity")</FluentLabel>
+        </div>
+        <EditForm Model="_form" OnValidSubmit="SaveActivity">
+            <DataAnnotationsValidator />
+            <div class="form-stack">
+                <FluentTextField Label="Title" Required="true" @bind-Value="_form.Title" />
+                <FluentTextField Label="Category" @bind-Value="_form.Category" />
+                <FluentSelect Label="Status" Items="ActivityStatuses" @bind-SelectedOption="_form.Status" />
+                <FluentDatePicker Label="Start date" @bind-Value="_form.StartDate" />
+                <FluentDatePicker Label="Due date" @bind-Value="_form.DueDate" />
+                <FluentTextArea Label="Notes" Rows="4" @bind-Value="_form.Description" />
+                <FluentCheckbox Label="Mark as important" @bind-Value="_form.IsImportant" />
 
                 @if (!string.IsNullOrWhiteSpace(_formError))
                 {
-                    <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mt-3">@_formError</MudAlert>
+                    <div class="form-error">@_formError</div>
                 }
 
-                <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled" FullWidth="true" Class="mt-4">
-                    Save
-                </MudButton>
-                @if (_form.Id != 0)
+                <div class="form-actions">
+                    <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit" Loading="_saving">Save activity</FluentButton>
+                    @if (_editingId is not null)
+                    {
+                        <FluentButton Appearance="Appearance.Outline" OnClick="ResetForm">Cancel</FluentButton>
+                    }
+                </div>
+            </div>
+        </EditForm>
+    </FluentCard>
+
+    <FluentCard class="panel-card">
+        <div class="panel-header">
+            <FluentLabel Typo="Typography.H5">Activity list</FluentLabel>
+            <FluentSelect Label="Filter" Items="StatusFilters" @bind-SelectedOption="_statusFilter" />
+        </div>
+        <div class="list-stack">
+            @if (FilteredActivities.Count == 0)
+            {
+                <p class="empty-state">No activities match this filter.</p>
+            }
+            else
+            {
+                @foreach (var activity in FilteredActivities)
                 {
-                    <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="ResetForm" FullWidth="true" Class="mt-2">
-                        Cancel edit
-                    </MudButton>
+                    <div class="entry-card">
+                        <div class="entry-info">
+                            <div class="item-title">
+                                @activity.Title
+                                @if (activity.IsImportant)
+                                {
+                                    <span class="tag">Important</span>
+                                }
+                            </div>
+                            <div class="item-meta">@FormatSchedule(activity)</div>
+                            <div class="item-meta">@(!string.IsNullOrWhiteSpace(activity.Description) ? activity.Description : "No notes yet.")</div>
+                        </div>
+                        <div class="entry-actions">
+                            <span class="status-pill status-@activity.Status.ToString().ToLowerInvariant()">@activity.Status</span>
+                            <div class="button-row">
+                                <FluentButton Appearance="Appearance.Outline" OnClick="@(() => StartEdit(activity))">Edit</FluentButton>
+                                <FluentButton Appearance="Appearance.Outline" OnClick="@(() => ToggleDone(activity))">
+                                    @(activity.Status == ActivityStatus.Done ? "Reopen" : "Mark done")
+                                </FluentButton>
+                                <FluentButton Appearance="Appearance.Outline" OnClick="@(() => DeleteActivity(activity))">Delete</FluentButton>
+                            </div>
+                        </div>
+                    </div>
                 }
-            </EditForm>
-        </MudPaper>
-    </MudItem>
-
-    <MudItem xs="12" lg="8">
-        <MudPaper Class="pa-4">
-            <MudStack direction="Row" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="2">
-                <MudText Typo="Typo.h6">All entries</MudText>
-                <MudSelect T="string" @bind-Value="_filterChip" Variant="Variant.Outlined" Dense="true" Style="min-width: 160px;">
-                    <MudSelectItem Value="@("All")">All</MudSelectItem>
-                    <MudSelectItem Value="@("Income")">Income</MudSelectItem>
-                    <MudSelectItem Value="@("Expense")">Expense</MudSelectItem>
-                </MudSelect>
-            </MudStack>
-
-            <MudTable Items="_filteredTransactions" Dense="true" Hover="true" Class="mt-3">
-                <HeaderContent>
-                    <MudTh>Date</MudTh>
-                    <MudTh>Category</MudTh>
-                    <MudTh align="right">Amount</MudTh>
-                    <MudTh>Note</MudTh>
-                    <MudTh></MudTh>
-                </HeaderContent>
-                <RowTemplate>
-                    <MudTd>@context.TransactionDate.ToLocalTime().ToString("MMM dd, yyyy")</MudTd>
-                    <MudTd>@context.Category?.Name (@context.Category?.Type)</MudTd>
-                    <MudTd align="right">@context.Amount.ToString("C")</MudTd>
-                    <MudTd>@context.Note</MudTd>
-                    <MudTd align="right">
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="@(() => EditTransaction(context))" />
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => DeleteTransaction(context.Id))" />
-                    </MudTd>
-                </RowTemplate>
-                <NoRecordsContent>
-                    <MudText>No transactions yet.</MudText>
-                </NoRecordsContent>
-            </MudTable>
-        </MudPaper>
-    </MudItem>
-</MudGrid>
+            }
+        </div>
+    </FluentCard>
+</div>
 
 @code {
-    [Inject] private ITransactionService TransactionService { get; set; } = default!;
-    [Inject] private ICategoryService CategoryService { get; set; } = default!;
+    [Inject] private ActivityService ActivityService { get; set; } = default!;
     [Inject] private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
 
     private string _userId = string.Empty;
-    private readonly List<Category> _categories = new();
-    private readonly List<Transaction> _transactions = new();
-    private TransactionForm _form = new();
-    private string _filterChip = "All";
+    private readonly List<ActivityItem> _activities = new();
+    private string? _editingId;
+    private DateTime? _editingCreatedAt;
+    private bool _saving;
     private string? _formError;
+    private string _statusFilter = "All";
+    private ActivityForm _form = new();
 
-    private IEnumerable<Transaction> _filteredTransactions =>
-        _filterChip switch
-        {
-            "Income" => _transactions.Where(t => t.Category?.Type == CategoryType.Income),
-            "Expense" => _transactions.Where(t => t.Category?.Type == CategoryType.Expense),
-            _ => _transactions
-        };
+    private static IEnumerable<ActivityStatus> ActivityStatuses => Enum.GetValues<ActivityStatus>();
+    private static IEnumerable<string> StatusFilters => new[] { "All", "Planned", "InProgress", "Done" };
 
     protected override async Task OnInitializedAsync()
     {
         _userId = await GetUserIdAsync();
-        await LoadCategories();
-        await LoadTransactions();
+        await LoadActivities();
     }
 
-    private async Task LoadCategories()
+    private async Task LoadActivities()
     {
-        _categories.Clear();
-        _categories.AddRange(await CategoryService.GetByTypeAsync(_userId, CategoryType.Income));
-        _categories.AddRange(await CategoryService.GetByTypeAsync(_userId, CategoryType.Expense));
-    }
-
-    private async Task LoadTransactions()
-    {
-        _transactions.Clear();
-        _transactions.AddRange(await TransactionService.GetAllAsync(_userId));
-    }
-
-    private async Task SaveTransaction()
-    {
-        _formError = null;
-        if (_form.CategoryId == 0)
+        _activities.Clear();
+        if (string.IsNullOrWhiteSpace(_userId))
         {
-            _formError = "Please select a category.";
             return;
         }
 
-        if (_form.Id == 0)
-        {
-            await TransactionService.CreateAsync(new Transaction
-            {
-                Amount = _form.Amount,
-                CategoryId = _form.CategoryId,
-                Note = _form.Note,
-                TransactionDate = _form.TransactionDate ?? DateTime.Today,
-                UserId = _userId
-            });
-        }
-        else
-        {
-            await TransactionService.UpdateAsync(new Transaction
-            {
-                Id = _form.Id,
-                Amount = _form.Amount,
-                CategoryId = _form.CategoryId,
-                Note = _form.Note,
-                TransactionDate = _form.TransactionDate ?? DateTime.Today,
-                UserId = _userId
-            });
-        }
-
-        ResetForm();
-        await LoadTransactions();
+        _activities.AddRange(await ActivityService.GetAllAsync(_userId));
     }
 
-    private void EditTransaction(Transaction transaction)
+    private List<ActivityItem> FilteredActivities
+        => _activities
+            .Where(activity => _statusFilter == "All" || activity.Status.ToString() == _statusFilter)
+            .OrderBy(activity => activity.Status)
+            .ThenBy(activity => activity.DueDate ?? DateTime.MaxValue)
+            .ToList();
+
+    private void NewActivity()
     {
-        _form = new TransactionForm
+        ResetForm();
+    }
+
+    private void StartEdit(ActivityItem activity)
+    {
+        _editingId = activity.Id;
+        _editingCreatedAt = activity.CreatedAt;
+        _form = new ActivityForm
         {
-            Id = transaction.Id,
-            Amount = transaction.Amount,
-            CategoryId = transaction.CategoryId,
-            Note = transaction.Note,
-            TransactionDate = transaction.TransactionDate.ToLocalTime()
+            Title = activity.Title,
+            Description = activity.Description,
+            Category = activity.Category,
+            Status = activity.Status,
+            StartDate = activity.StartDate,
+            DueDate = activity.DueDate,
+            IsImportant = activity.IsImportant
         };
     }
 
-    private async Task DeleteTransaction(int id)
+    private async Task SaveActivity()
     {
-        await TransactionService.DeleteAsync(id, _userId);
-        await LoadTransactions();
+        if (string.IsNullOrWhiteSpace(_userId))
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_form.Title))
+        {
+            _formError = "Title is required.";
+            return;
+        }
+
+        _formError = null;
+        _saving = true;
+
+        var activity = new ActivityItem
+        {
+            Id = _editingId,
+            UserId = _userId,
+            Title = _form.Title.Trim(),
+            Description = _form.Description?.Trim(),
+            Category = _form.Category?.Trim(),
+            Status = _form.Status,
+            StartDate = _form.StartDate,
+            DueDate = _form.DueDate,
+            IsImportant = _form.IsImportant,
+            CompletedAt = _form.Status == ActivityStatus.Done ? DateTime.UtcNow : null,
+            CreatedAt = _editingCreatedAt ?? DateTime.UtcNow
+        };
+
+        if (_editingId is null)
+        {
+            await ActivityService.CreateAsync(activity);
+        }
+        else
+        {
+            await ActivityService.UpdateAsync(activity);
+        }
+
+        await LoadActivities();
+        ResetForm();
+        _saving = false;
+    }
+
+    private async Task ToggleDone(ActivityItem activity)
+    {
+        activity.Status = activity.Status == ActivityStatus.Done ? ActivityStatus.InProgress : ActivityStatus.Done;
+        activity.CompletedAt = activity.Status == ActivityStatus.Done ? DateTime.UtcNow : null;
+        await ActivityService.UpdateAsync(activity);
+        await LoadActivities();
+    }
+
+    private async Task DeleteActivity(ActivityItem activity)
+    {
+        if (string.IsNullOrWhiteSpace(activity.Id))
+        {
+            return;
+        }
+
+        await ActivityService.DeleteAsync(activity.Id, _userId);
+        await LoadActivities();
+        ResetForm();
     }
 
     private void ResetForm()
     {
-        _form = new TransactionForm();
+        _editingId = null;
+        _editingCreatedAt = null;
+        _form = new ActivityForm();
         _formError = null;
+    }
+
+    private string FormatSchedule(ActivityItem activity)
+    {
+        var start = activity.StartDate?.ToLocalTime().ToString("MMM dd") ?? "Flexible";
+        var due = activity.DueDate?.ToLocalTime().ToString("MMM dd") ?? "No due date";
+        var category = string.IsNullOrWhiteSpace(activity.Category) ? "General" : activity.Category;
+        return $"{category} · {start} → {due}";
     }
 
     private async Task<string> GetUserIdAsync()
@@ -190,17 +236,21 @@
         return authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
     }
 
-    private sealed class TransactionForm
+    private sealed class ActivityForm
     {
-        public int Id { get; set; }
-
         [Required]
-        public decimal Amount { get; set; }
+        public string Title { get; set; } = string.Empty;
 
-        public int CategoryId { get; set; }
+        public string? Description { get; set; }
 
-        public DateTime? TransactionDate { get; set; } = DateTime.Today;
+        public string? Category { get; set; }
 
-        public string? Note { get; set; }
+        public DateTime? StartDate { get; set; } = DateTime.Today;
+
+        public DateTime? DueDate { get; set; } = DateTime.Today.AddDays(1);
+
+        public ActivityStatus Status { get; set; } = ActivityStatus.Planned;
+
+        public bool IsImportant { get; set; }
     }
 }
