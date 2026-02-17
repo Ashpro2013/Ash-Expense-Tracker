@@ -9,7 +9,8 @@ public sealed class AppDbContextFactory
 
     public AppDbContextFactory()
     {
-        var dataDirectory = Path.Combine(AppContext.BaseDirectory, "Data");
+        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var dataDirectory = Path.Combine(localAppData, "AshproApp", "Data");
         Directory.CreateDirectory(dataDirectory);
 
         var databasePath = Path.Combine(dataDirectory, "ashproapp.db");

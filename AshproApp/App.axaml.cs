@@ -20,32 +20,47 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        DisableAvaloniaDataAnnotationValidation();
+
+        var viewModel = CreateMainWindowViewModel();
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            DisableAvaloniaDataAnnotationValidation();
-
-            var dbContextFactory = new AppDbContextFactory();
-            var authService = new AuthService(dbContextFactory);
-            var rememberMeService = new RememberMeService();
-            var albumService = new AlbumService();
-            var financeEntryService = new FinanceEntryService(dbContextFactory);
-            var diaryEntryService = new DiaryEntryService(dbContextFactory);
-            var activityItemService = new ActivityItemService(dbContextFactory);
-            var viewModel = new MainWindowViewModel(
-                authService,
-                rememberMeService,
-                albumService,
-                financeEntryService,
-                diaryEntryService,
-                activityItemService);
-
             desktop.MainWindow = new MainWindow
             {
                 DataContext = viewModel
             };
         }
+        else if (ApplicationLifetime is ISingleViewApplicationLifetime singleView)
+        {
+            singleView.MainView = new MainView
+            {
+                DataContext = viewModel
+            };
+
+            _ = viewModel.InitializeAsync();
+        }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private static MainWindowViewModel CreateMainWindowViewModel()
+    {
+        var dbContextFactory = new AppDbContextFactory();
+        var authService = new AuthService(dbContextFactory);
+        var rememberMeService = new RememberMeService();
+        var albumService = new AlbumService();
+        var financeEntryService = new FinanceEntryService(dbContextFactory);
+        var diaryEntryService = new DiaryEntryService(dbContextFactory);
+        var activityItemService = new ActivityItemService(dbContextFactory);
+
+        return new MainWindowViewModel(
+            authService,
+            rememberMeService,
+            albumService,
+            financeEntryService,
+            diaryEntryService,
+            activityItemService);
     }
 
     private static void DisableAvaloniaDataAnnotationValidation()

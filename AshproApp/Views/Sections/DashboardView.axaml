@@ -9,7 +9,7 @@
     <TextBlock Text="Dashboard" Classes="pageTitle" />
     <TextBlock Text="Income, expense, and balance overview with visual trends." Classes="subtitle" Margin="0,0,0,12" />
 
-    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
+    <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
       <Border Classes="surfaceCard">
         <StackPanel>
           <TextBlock Text="Total income" Classes="muted" />
@@ -17,14 +17,14 @@
           <TextBlock Text="Last 30 days" Classes="muted" />
         </StackPanel>
       </Border>
-      <Border Grid.Column="1" Classes="surfaceCard">
+      <Border Grid.Row="1" Classes="surfaceCard">
         <StackPanel>
           <TextBlock Text="Total expense" Classes="muted" />
           <TextBlock Text="{Binding ExpenseTotal, StringFormat='{}{0:C}'}" FontSize="28" FontWeight="Bold" />
           <TextBlock Text="Last 30 days" Classes="muted" />
         </StackPanel>
       </Border>
-      <Border Grid.Column="2" Classes="surfaceCard">
+      <Border Grid.Row="2" Classes="surfaceCard">
         <StackPanel>
           <TextBlock Text="Balance" Classes="muted" />
           <TextBlock Text="{Binding Balance, StringFormat='{}{0:C}'}" FontSize="28" FontWeight="Bold" />
@@ -33,14 +33,14 @@
       </Border>
     </Grid>
 
-    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+    <Grid RowDefinitions="Auto,Auto" RowSpacing="10">
       <Border Classes="surfaceCard">
         <StackPanel>
           <TextBlock Text="Diary entries" Classes="muted" />
           <TextBlock Text="{Binding DiaryEntriesCount}" FontSize="26" FontWeight="Bold" />
         </StackPanel>
       </Border>
-      <Border Grid.Column="1" Classes="surfaceCard">
+      <Border Grid.Row="1" Classes="surfaceCard">
         <StackPanel>
           <TextBlock Text="Open activities" Classes="muted" />
           <TextBlock Text="{Binding OpenActivitiesCount}" FontSize="26" FontWeight="Bold" />

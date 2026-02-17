@@ -5,7 +5,7 @@
              x:CompileBindings="False"
              x:Class="AshproApp.Views.Sections.DiaryView"
              x:DataType="vm:MainWindowViewModel">
-  <Grid ColumnDefinitions="430,*" ColumnSpacing="12">
+  <Grid RowDefinitions="Auto,Auto" RowSpacing="12">
     <Border Classes="surfaceCard">
       <StackPanel Spacing="8">
         <TextBlock Text="{Binding DiaryHeader}" Classes="sectionTitle" />
@@ -27,7 +27,7 @@
       </StackPanel>
     </Border>
 
-    <Border Grid.Column="1" Classes="surfaceCard">
+    <Border Grid.Row="1" Classes="surfaceCard">
       <StackPanel>
         <TextBlock Text="Recent entries" Classes="sectionTitle" />
         <TextBox Watermark="Search title or tag" Text="{Binding DiarySearch}" Margin="0,0,0,10" />
@@ -42,8 +42,8 @@
                   <TextBlock Text="{Binding Content}" TextWrapping="Wrap" MaxHeight="80" />
                   <TextBlock Text="{Binding TagsCsv, StringFormat='Tags: {0}'}" Classes="muted" />
                   <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button Content="Edit" Command="{Binding $parent[Window].DataContext.EditDiaryCommand}" CommandParameter="{Binding}" />
-                    <Button Content="Delete" Command="{Binding $parent[Window].DataContext.DeleteDiaryCommand}" CommandParameter="{Binding}" />
+                    <Button Content="Edit" Command="{Binding $parent[UserControl].DataContext.EditDiaryCommand}" CommandParameter="{Binding}" />
+                    <Button Content="Delete" Command="{Binding $parent[UserControl].DataContext.DeleteDiaryCommand}" CommandParameter="{Binding}" />
                   </StackPanel>
                 </StackPanel>
               </Border>

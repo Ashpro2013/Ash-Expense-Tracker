@@ -5,7 +5,7 @@
              x:Class="AshproApp.Views.Sections.AlbumsView"
              x:DataType="vm:MainWindowViewModel">
   <Grid>
-    <Grid ColumnDefinitions="340,*" ColumnSpacing="12">
+    <Grid RowDefinitions="Auto,Auto" RowSpacing="12">
       <Border Classes="surfaceCard">
         <StackPanel Spacing="8">
           <TextBlock Text="Image Albums" Classes="sectionTitle" />
@@ -26,7 +26,7 @@
         </StackPanel>
       </Border>
 
-      <Border Grid.Column="1" Classes="surfaceCard">
+      <Border Grid.Row="1" Classes="surfaceCard">
         <StackPanel>
           <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,10">
             <TextBlock Text="Album gallery" Classes="sectionTitle" />
@@ -60,15 +60,15 @@
                     <Grid ColumnDefinitions="*,*,*" ColumnSpacing="6" Margin="0,4,0,0">
                       <Button Grid.Column="0"
                               Content="View"
-                              Command="{Binding $parent[Window].DataContext.OpenAlbumViewerCommand}"
+                              Command="{Binding $parent[UserControl].DataContext.OpenAlbumViewerCommand}"
                               CommandParameter="{Binding}" />
                       <Button Grid.Column="1"
                               Content="Download"
-                              Command="{Binding $parent[Window].DataContext.DownloadAlbumImageCommand}"
+                              Command="{Binding $parent[UserControl].DataContext.DownloadAlbumImageCommand}"
                               CommandParameter="{Binding}" />
                       <Button Grid.Column="2"
                               Content="Delete"
-                              Command="{Binding $parent[Window].DataContext.DeleteAlbumImageCommand}"
+                              Command="{Binding $parent[UserControl].DataContext.DeleteAlbumImageCommand}"
                               CommandParameter="{Binding}" />
                     </Grid>
                   </StackPanel>
@@ -88,9 +88,7 @@
               Padding="14"
               HorizontalAlignment="Center"
               VerticalAlignment="Center"
-              Width="980"
               MaxWidth="1080"
-              Height="700"
               MaxHeight="760">
         <Grid RowDefinitions="Auto,*,Auto" RowSpacing="10">
           <Grid ColumnDefinitions="*,Auto" Grid.Row="0">
@@ -114,35 +112,39 @@
             </ScrollViewer>
           </Border>
 
-          <Grid Grid.Row="2" ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" ColumnSpacing="8">
-            <Button Grid.Column="0"
-                    Content="Previous"
-                    Command="{Binding ShowPreviousAlbumImageCommand}"
-                    IsEnabled="{Binding CanViewPreviousAlbumImage}" />
-            <Button Grid.Column="1"
-                    Content="Next"
-                    Command="{Binding ShowNextAlbumImageCommand}"
-                    IsEnabled="{Binding CanViewNextAlbumImage}" />
-            <Button Grid.Column="2"
-                    Content="-"
-                    Width="42"
-                    Command="{Binding ZoomOutAlbumImageCommand}" />
-            <Button Grid.Column="3"
-                    Content="+"
-                    Width="42"
-                    Command="{Binding ZoomInAlbumImageCommand}" />
-            <Button Grid.Column="4"
-                    Content="Reset zoom"
-                    Command="{Binding ResetAlbumImageZoomCommand}" />
-            <Button Grid.Column="5"
-                    Content="Download"
-                    Command="{Binding DownloadAlbumImageCommand}"
-                    CommandParameter="{Binding AlbumViewerItem}" />
-            <TextBlock Grid.Column="6"
-                       VerticalAlignment="Center"
-                       Foreground="#0F172A"
-                       Text="{Binding AlbumViewerZoomText}" />
-          </Grid>
+          <ScrollViewer Grid.Row="2"
+                        HorizontalScrollBarVisibility="Auto"
+                        VerticalScrollBarVisibility="Disabled">
+            <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" ColumnSpacing="8">
+              <Button Grid.Column="0"
+                      Content="Previous"
+                      Command="{Binding ShowPreviousAlbumImageCommand}"
+                      IsEnabled="{Binding CanViewPreviousAlbumImage}" />
+              <Button Grid.Column="1"
+                      Content="Next"
+                      Command="{Binding ShowNextAlbumImageCommand}"
+                      IsEnabled="{Binding CanViewNextAlbumImage}" />
+              <Button Grid.Column="2"
+                      Content="-"
+                      Width="42"
+                      Command="{Binding ZoomOutAlbumImageCommand}" />
+              <Button Grid.Column="3"
+                      Content="+"
+                      Width="42"
+                      Command="{Binding ZoomInAlbumImageCommand}" />
+              <Button Grid.Column="4"
+                      Content="Reset zoom"
+                      Command="{Binding ResetAlbumImageZoomCommand}" />
+              <Button Grid.Column="5"
+                      Content="Download"
+                      Command="{Binding DownloadAlbumImageCommand}"
+                      CommandParameter="{Binding AlbumViewerItem}" />
+              <TextBlock Grid.Column="6"
+                         VerticalAlignment="Center"
+                         Foreground="#0F172A"
+                         Text="{Binding AlbumViewerZoomText}" />
+            </Grid>
+          </ScrollViewer>
         </Grid>
       </Border>
     </Border>

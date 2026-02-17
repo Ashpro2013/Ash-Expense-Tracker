@@ -4,7 +4,7 @@
              x:CompileBindings="False"
              x:Class="AshproApp.Views.Sections.AccountView"
              x:DataType="vm:MainWindowViewModel">
-  <Grid ColumnDefinitions="430,*" ColumnSpacing="12">
+  <Grid RowDefinitions="Auto,Auto" RowSpacing="12">
     <Border Classes="surfaceCard">
       <StackPanel Spacing="8">
         <TextBlock Text="Account Settings" Classes="sectionTitle" />
@@ -29,7 +29,7 @@
       </StackPanel>
     </Border>
 
-    <Border Grid.Column="1" Classes="surfaceCard">
+    <Border Grid.Row="1" Classes="surfaceCard">
       <StackPanel Spacing="10">
         <TextBlock Text="Security Tips" Classes="sectionTitle" />
         <TextBlock Text="Use a long password with letters, numbers, and symbols." Classes="muted" TextWrapping="Wrap" />

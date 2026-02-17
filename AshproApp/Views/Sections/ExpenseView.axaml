@@ -5,7 +5,7 @@
              x:CompileBindings="False"
              x:Class="AshproApp.Views.Sections.ExpenseView"
              x:DataType="vm:MainWindowViewModel">
-  <Grid ColumnDefinitions="430,*" ColumnSpacing="12">
+  <Grid RowDefinitions="Auto,Auto" RowSpacing="12">
     <Border Classes="surfaceCard">
       <StackPanel Spacing="8">
         <TextBlock Text="{Binding ExpenseHeader}" Classes="sectionTitle" />
@@ -25,7 +25,7 @@
       </StackPanel>
     </Border>
 
-    <Border Grid.Column="1" Classes="surfaceCard">
+    <Border Grid.Row="1" Classes="surfaceCard">
       <StackPanel>
         <TextBlock Text="Expense history" Classes="sectionTitle" />
         <TextBlock Text="{Binding ExpenseTotal, StringFormat='Last 30 days total: {0:C}'}" Classes="muted" Margin="0,0,0,8" />
@@ -39,8 +39,8 @@
                   <TextBlock Text="{Binding Amount, StringFormat='{}{0:C}'}" FontWeight="Bold" />
                   <TextBlock Text="{Binding Note}" TextWrapping="Wrap" />
                   <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button Content="Edit" Command="{Binding $parent[Window].DataContext.EditExpenseCommand}" CommandParameter="{Binding}" />
-                    <Button Content="Delete" Command="{Binding $parent[Window].DataContext.DeleteExpenseCommand}" CommandParameter="{Binding}" />
+                    <Button Content="Edit" Command="{Binding $parent[UserControl].DataContext.EditExpenseCommand}" CommandParameter="{Binding}" />
+                    <Button Content="Delete" Command="{Binding $parent[UserControl].DataContext.DeleteExpenseCommand}" CommandParameter="{Binding}" />
                   </StackPanel>
                 </StackPanel>
               </Border>

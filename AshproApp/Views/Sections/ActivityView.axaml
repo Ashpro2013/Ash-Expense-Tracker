@@ -5,7 +5,7 @@
              x:CompileBindings="False"
              x:Class="AshproApp.Views.Sections.ActivityView"
              x:DataType="vm:MainWindowViewModel">
-  <Grid ColumnDefinitions="430,*" ColumnSpacing="12">
+  <Grid RowDefinitions="Auto,Auto" RowSpacing="12">
     <Border Classes="surfaceCard">
       <StackPanel Spacing="8">
         <TextBlock Text="{Binding ActivityHeader}" Classes="sectionTitle" />
@@ -30,7 +30,7 @@
       </StackPanel>
     </Border>
 
-    <Border Grid.Column="1" Classes="surfaceCard">
+    <Border Grid.Row="1" Classes="surfaceCard">
       <StackPanel>
         <TextBlock Text="Activity list" Classes="sectionTitle" />
         <ComboBox ItemsSource="{Binding StatusFilters}" SelectedItem="{Binding ActivityStatusFilter}" Width="180" Margin="0,0,0,10" />
@@ -53,9 +53,9 @@
                   <TextBlock Text="{Binding Status}" FontWeight="SemiBold" />
                   <TextBlock Text="Important" IsVisible="{Binding IsImportant}" Foreground="#B45309" />
                   <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button Content="Edit" Command="{Binding $parent[Window].DataContext.EditActivityCommand}" CommandParameter="{Binding}" />
-                    <Button Content="Toggle done" Command="{Binding $parent[Window].DataContext.ToggleActivityDoneCommand}" CommandParameter="{Binding}" />
-                    <Button Content="Delete" Command="{Binding $parent[Window].DataContext.DeleteActivityCommand}" CommandParameter="{Binding}" />
+                    <Button Content="Edit" Command="{Binding $parent[UserControl].DataContext.EditActivityCommand}" CommandParameter="{Binding}" />
+                    <Button Content="Toggle done" Command="{Binding $parent[UserControl].DataContext.ToggleActivityDoneCommand}" CommandParameter="{Binding}" />
+                    <Button Content="Delete" Command="{Binding $parent[UserControl].DataContext.DeleteActivityCommand}" CommandParameter="{Binding}" />
                   </StackPanel>
                 </StackPanel>
               </Border>
