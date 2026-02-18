@@ -19,6 +19,9 @@
 
           <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,6,0,0">
             <Button Content="Upload images" Classes="primaryAction" Click="UploadImages_Click" />
+            <Button Content="Take photo"
+                    Command="{Binding CaptureAlbumPhotoCommand}"
+                    IsVisible="{Binding IsCameraCaptureSupported}" />
           </StackPanel>
 
           <TextBlock Text="{Binding AlbumError}" Classes="error" />
@@ -57,7 +60,7 @@
                     <TextBlock Text="{Binding Category}" Classes="muted" />
                     <TextBlock Text="{Binding CreatedAtUtc, StringFormat='{}{0:MMM dd, yyyy}'}" Classes="muted" />
 
-                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="6" Margin="0,4,0,0">
+                    <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="6" Margin="0,4,0,0">
                       <Button Grid.Column="0"
                               Content="View"
                               Command="{Binding $parent[UserControl].DataContext.OpenAlbumViewerCommand}"
@@ -67,6 +70,11 @@
                               Command="{Binding $parent[UserControl].DataContext.DownloadAlbumImageCommand}"
                               CommandParameter="{Binding}" />
                       <Button Grid.Column="2"
+                              Content="Share"
+                              IsVisible="{Binding $parent[UserControl].DataContext.IsImageShareSupported}"
+                              Command="{Binding $parent[UserControl].DataContext.ShareAlbumImageCommand}"
+                              CommandParameter="{Binding}" />
+                      <Button Grid.Column="3"
                               Content="Delete"
                               Command="{Binding $parent[UserControl].DataContext.DeleteAlbumImageCommand}"
                               CommandParameter="{Binding}" />
@@ -81,41 +89,52 @@
     </Grid>
 
     <Border IsVisible="{Binding IsAlbumViewerOpen}"
-            Background="#B3000000"
-            Padding="22">
-      <Border Background="#FFFFFF"
+            Background="#E6000000"
+            Padding="10">
+      <Border Background="#0B1020"
               CornerRadius="14"
-              Padding="14"
-              HorizontalAlignment="Center"
-              VerticalAlignment="Center"
-              MaxWidth="1080"
-              MaxHeight="760">
+              Padding="12"
+              HorizontalAlignment="Stretch"
+              VerticalAlignment="Stretch">
         <Grid RowDefinitions="Auto,*,Auto" RowSpacing="10">
           <Grid ColumnDefinitions="*,Auto" Grid.Row="0">
             <StackPanel Spacing="2">
-              <TextBlock Text="{Binding AlbumViewerCaption}" FontSize="18" FontWeight="SemiBold" Foreground="#0F172A" />
-              <TextBlock Text="{Binding AlbumViewerMeta}" Foreground="#334155" />
+              <TextBlock Text="{Binding AlbumViewerCaption}" FontSize="18" FontWeight="SemiBold" Foreground="#F8FAFC" />
+              <TextBlock Text="{Binding AlbumViewerMeta}" Foreground="#CBD5E1" />
             </StackPanel>
             <Button Grid.Column="1"
                     Content="Close"
                     Command="{Binding CloseAlbumViewerCommand}" />
           </Grid>
 
-          <Border Grid.Row="1" Background="#0F172A" CornerRadius="10" Padding="10">
-            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-              <Image Source="{Binding AlbumViewerImage}"
+          <Border Grid.Row="1"
+                  x:Name="ViewerViewport"
+                  Background="#020617"
+                  CornerRadius="10"
+                  ClipToBounds="True"
+                  SizeChanged="ViewerViewport_SizeChanged">
+            <ScrollViewer x:Name="ViewerScroll"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Auto"
+                          PointerWheelChanged="ViewerScroll_PointerWheelChanged"
+                          PointerPressed="ViewerScroll_PointerPressed"
+                          PointerMoved="ViewerScroll_PointerMoved"
+                          PointerReleased="ViewerScroll_PointerReleased">
+              <Image x:Name="ViewerImage"
+                     Source="{Binding AlbumViewerImage}"
                      Width="{Binding AlbumViewerImageWidth}"
                      Height="{Binding AlbumViewerImageHeight}"
                      Stretch="None"
                      HorizontalAlignment="Center"
-                     VerticalAlignment="Center" />
+                     VerticalAlignment="Center"
+                     Tapped="ViewerImage_Tapped" />
             </ScrollViewer>
           </Border>
 
           <ScrollViewer Grid.Row="2"
                         HorizontalScrollBarVisibility="Auto"
                         VerticalScrollBarVisibility="Disabled">
-            <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" ColumnSpacing="8">
+            <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" ColumnSpacing="8">
               <Button Grid.Column="0"
                       Content="Previous"
                       Command="{Binding ShowPreviousAlbumImageCommand}"
@@ -139,9 +158,14 @@
                       Content="Download"
                       Command="{Binding DownloadAlbumImageCommand}"
                       CommandParameter="{Binding AlbumViewerItem}" />
-              <TextBlock Grid.Column="6"
+              <Button Grid.Column="6"
+                      Content="Share"
+                      IsVisible="{Binding IsImageShareSupported}"
+                      Command="{Binding ShareAlbumImageCommand}"
+                      CommandParameter="{Binding AlbumViewerItem}" />
+              <TextBlock Grid.Column="7"
                          VerticalAlignment="Center"
-                         Foreground="#0F172A"
+                         Foreground="#E2E8F0"
                          Text="{Binding AlbumViewerZoomText}" />
             </Grid>
           </ScrollViewer>

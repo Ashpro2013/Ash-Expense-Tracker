@@ -13,6 +13,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly AuthService _authService;
     private readonly RememberMeService _rememberMeService;
     private readonly AlbumService _albumService;
+    private readonly IPlatformMediaService _platformMediaService;
     private readonly FinanceEntryService _financeEntryService;
     private readonly DiaryEntryService _diaryEntryService;
     private readonly ActivityItemService _activityItemService;
@@ -21,11 +22,14 @@ public partial class MainWindowViewModel : ViewModelBase
     private bool _isInitialized;
     private readonly List<AlbumImageCard> _albumViewerItems = new();
     private int _albumViewerIndex = -1;
+    private double _albumViewerViewportWidth;
+    private double _albumViewerViewportHeight;
 
     public MainWindowViewModel(
         AuthService authService,
         RememberMeService rememberMeService,
         AlbumService albumService,
+        IPlatformMediaService platformMediaService,
         FinanceEntryService financeEntryService,
         DiaryEntryService diaryEntryService,
         ActivityItemService activityItemService)
@@ -33,6 +37,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _authService = authService;
         _rememberMeService = rememberMeService;
         _albumService = albumService;
+        _platformMediaService = platformMediaService;
         _financeEntryService = financeEntryService;
         _diaryEntryService = diaryEntryService;
         _activityItemService = activityItemService;
@@ -49,6 +54,8 @@ public partial class MainWindowViewModel : ViewModelBase
         DiaryEntries = new ObservableCollection<DiaryEntry>();
         Activities = new ObservableCollection<ActivityItem>();
         AlbumImages = new ObservableCollection<AlbumImageCard>();
+        IsCameraCaptureSupported = _platformMediaService.CanCapturePhoto;
+        IsImageShareSupported = _platformMediaService.CanShareFiles;
 
         ResetIncomeForm();
         ResetExpenseForm();
@@ -100,6 +107,8 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private string albumCaption = string.Empty;
     [ObservableProperty] private string albumError = string.Empty;
     [ObservableProperty] private string albumInfo = string.Empty;
+    [ObservableProperty] private bool isCameraCaptureSupported;
+    [ObservableProperty] private bool isImageShareSupported;
     [ObservableProperty] private bool isAlbumViewerOpen;
     [ObservableProperty] private AlbumImageCard? albumViewerItem;
     [ObservableProperty] private Bitmap? albumViewerImage;
@@ -387,6 +396,76 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private async Task CaptureAlbumPhotoAsync()
+    {
+        AlbumError = string.Empty;
+        AlbumInfo = string.Empty;
+
+        if (!EnsureAuthenticated())
+        {
+            AlbumError = "Sign in required.";
+            return;
+        }
+
+        if (!IsCameraCaptureSupported)
+        {
+            AlbumError = "Camera capture is only available on Android.";
+            return;
+        }
+
+        var capturedPath = await _platformMediaService.CapturePhotoAsync();
+        if (string.IsNullOrWhiteSpace(capturedPath))
+        {
+            AlbumError = "Photo capture was cancelled.";
+            return;
+        }
+
+        var saved = await _albumService.AddAsync(_currentUserId, capturedPath, SelectedAlbumCategory, AlbumCaption);
+        if (saved is null)
+        {
+            AlbumError = "Captured photo could not be saved.";
+            return;
+        }
+
+        AlbumCaption = string.Empty;
+        await LoadAlbumsAsync();
+        AlbumInfo = $"Photo captured and added to {SelectedAlbumCategory} album.";
+    }
+
+    [RelayCommand]
+    private async Task ShareAlbumImageAsync(AlbumImageCard? image)
+    {
+        if (image is null || !EnsureAuthenticated())
+        {
+            return;
+        }
+
+        AlbumError = string.Empty;
+        AlbumInfo = string.Empty;
+
+        if (!IsImageShareSupported)
+        {
+            AlbumError = "Image sharing is not available on this platform.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(image.FilePath) || !File.Exists(image.FilePath))
+        {
+            AlbumError = "Unable to find the image file.";
+            return;
+        }
+
+        var shared = await _platformMediaService.ShareImageAsync(image.FilePath, image.Caption);
+        if (!shared)
+        {
+            AlbumError = "Unable to open share options.";
+            return;
+        }
+
+        AlbumInfo = "Share sheet opened. Choose WhatsApp or any social app.";
+    }
+
+    [RelayCommand]
     private async Task DeleteAlbumImageAsync(AlbumImageCard? image)
     {
         if (image is null || !EnsureAuthenticated())
@@ -448,6 +527,8 @@ public partial class MainWindowViewModel : ViewModelBase
         AlbumViewerZoom = 1.0;
         AlbumViewerImageWidth = 0;
         AlbumViewerImageHeight = 0;
+        _albumViewerViewportWidth = 0;
+        _albumViewerViewportHeight = 0;
 
         AlbumViewerImage?.Dispose();
         AlbumViewerImage = null;
@@ -465,7 +546,7 @@ public partial class MainWindowViewModel : ViewModelBase
         }
 
         _albumViewerIndex--;
-        ShowAlbumViewerImage(resetZoom: false);
+        ShowAlbumViewerImage(resetZoom: true);
     }
 
     [RelayCommand]
@@ -477,19 +558,19 @@ public partial class MainWindowViewModel : ViewModelBase
         }
 
         _albumViewerIndex++;
-        ShowAlbumViewerImage(resetZoom: false);
+        ShowAlbumViewerImage(resetZoom: true);
     }
 
     [RelayCommand]
     private void ZoomInAlbumImage()
     {
-        SetAlbumViewerZoom(AlbumViewerZoom + 0.25);
+        SetAlbumViewerZoom(AlbumViewerZoom + 0.2);
     }
 
     [RelayCommand]
     private void ZoomOutAlbumImage()
     {
-        SetAlbumViewerZoom(AlbumViewerZoom - 0.25);
+        SetAlbumViewerZoom(AlbumViewerZoom - 0.2);
     }
 
     [RelayCommand]
@@ -1269,8 +1350,24 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private void SetAlbumViewerZoom(double zoom)
     {
-        var clampedZoom = Math.Clamp(zoom, 0.25, 4.0);
+        var clampedZoom = Math.Clamp(zoom, 1.0, 6.0);
         AlbumViewerZoom = clampedZoom;
+    }
+
+    public void SetAlbumViewerViewport(double width, double height)
+    {
+        var normalizedWidth = Math.Max(0, width);
+        var normalizedHeight = Math.Max(0, height);
+
+        if (Math.Abs(_albumViewerViewportWidth - normalizedWidth) < 0.5 &&
+            Math.Abs(_albumViewerViewportHeight - normalizedHeight) < 0.5)
+        {
+            return;
+        }
+
+        _albumViewerViewportWidth = normalizedWidth;
+        _albumViewerViewportHeight = normalizedHeight;
+        RefreshAlbumViewerDimensions();
     }
 
     private void RefreshAlbumViewerDimensions()
@@ -1282,8 +1379,22 @@ public partial class MainWindowViewModel : ViewModelBase
             return;
         }
 
-        AlbumViewerImageWidth = Math.Max(1, AlbumViewerImage.PixelSize.Width * AlbumViewerZoom);
-        AlbumViewerImageHeight = Math.Max(1, AlbumViewerImage.PixelSize.Height * AlbumViewerZoom);
+        var imageWidth = Math.Max(1, AlbumViewerImage.PixelSize.Width);
+        var imageHeight = Math.Max(1, AlbumViewerImage.PixelSize.Height);
+
+        var fitScale = 1.0;
+        if (_albumViewerViewportWidth > 1 && _albumViewerViewportHeight > 1)
+        {
+            var widthScale = _albumViewerViewportWidth / imageWidth;
+            var heightScale = _albumViewerViewportHeight / imageHeight;
+            fitScale = Math.Min(widthScale, heightScale);
+        }
+
+        var baseWidth = imageWidth * fitScale;
+        var baseHeight = imageHeight * fitScale;
+
+        AlbumViewerImageWidth = Math.Max(1, baseWidth * AlbumViewerZoom);
+        AlbumViewerImageHeight = Math.Max(1, baseHeight * AlbumViewerZoom);
     }
 
     private static string BuildDownloadFileName(string caption)

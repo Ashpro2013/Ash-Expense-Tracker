@@ -50,6 +50,7 @@ public partial class App : Application
         var authService = new AuthService(dbContextFactory);
         var rememberMeService = new RememberMeService();
         var albumService = new AlbumService();
+        var platformMediaService = PlatformMediaServiceLocator.Current;
         var financeEntryService = new FinanceEntryService(dbContextFactory);
         var diaryEntryService = new DiaryEntryService(dbContextFactory);
         var activityItemService = new ActivityItemService(dbContextFactory);
@@ -58,6 +59,7 @@ public partial class App : Application
             authService,
             rememberMeService,
             albumService,
+            platformMediaService,
             financeEntryService,
             diaryEntryService,
             activityItemService);
