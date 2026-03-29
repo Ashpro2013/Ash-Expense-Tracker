@@ -1,10 +1,11 @@
+using ExpenseIncomeTracker.Uno.Interfaces;
 using System.Text.Json;
 using ExpenseIncomeTracker.Uno.Models;
 using Windows.Storage;
 
 namespace ExpenseIncomeTracker.Uno.Services;
 
-public sealed class LocalStoreService
+public sealed class LocalStoreService : ILocalStoreService
 {
     private const string FileName = "expense_tracker_state.json";
 

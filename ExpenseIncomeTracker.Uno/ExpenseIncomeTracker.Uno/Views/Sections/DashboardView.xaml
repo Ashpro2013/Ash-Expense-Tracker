@@ -1,0 +1,61 @@
+<UserControl x:Class="ExpenseIncomeTracker.Uno.Views.Sections.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             RequestedTheme="Light">
+    <Border Background="{StaticResource PanelBrush}" CornerRadius="18" Padding="18" BorderBrush="#BAE6FD" BorderThickness="1">
+        <StackPanel Spacing="12">
+            <TextBlock Text="Dashboard Overview" FontSize="28" FontWeight="SemiBold" />
+            <TextBlock Text="A quick pulse of your cash flow and productivity." Foreground="{StaticResource TextMutedBrush}" />
+            <Grid Margin="0,4,0,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Row="0" Grid.Column="0" Margin="0,0,8,8" Padding="12" CornerRadius="12" Background="#DBEAFE" BorderBrush="#93C5FD" BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="Income" Foreground="{StaticResource TextMutedBrush}" />
+                        <TextBlock x:Name="IncomeTotalText" x:FieldModifier="public" FontSize="20" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Border>
+                <Border Grid.Row="0" Grid.Column="1" Margin="8,0,0,8" Padding="12" CornerRadius="12" Background="#FCE7F3" BorderBrush="#F9A8D4" BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="Expense" Foreground="{StaticResource TextMutedBrush}" />
+                        <TextBlock x:Name="ExpenseTotalText" x:FieldModifier="public" FontSize="20" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="0" Margin="0,0,8,8" Padding="12" CornerRadius="12" Background="#CCFBF1" BorderBrush="#5EEAD4" BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="Balance" Foreground="{StaticResource TextMutedBrush}" />
+                        <TextBlock x:Name="BalanceText" x:FieldModifier="public" FontSize="20" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="1" Margin="8,0,0,8" Padding="12" CornerRadius="12" Background="#DCFCE7" BorderBrush="#86EFAC" BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="Activities" Foreground="{StaticResource TextMutedBrush}" />
+                        <TextBlock x:Name="ActivityCountText" x:FieldModifier="public" FontSize="20" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Border>
+                <Border Grid.Row="2" Grid.Column="0" Margin="0,0,8,0" Padding="12" CornerRadius="12" Background="#EDE9FE" BorderBrush="#C4B5FD" BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="Diary" Foreground="{StaticResource TextMutedBrush}" />
+                        <TextBlock x:Name="DiaryCountText" x:FieldModifier="public" FontSize="20" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Border>
+                <Border Grid.Row="2" Grid.Column="1" Margin="8,0,0,0" Padding="12" CornerRadius="12" Background="#FFEDD5" BorderBrush="#FDBA74" BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="Plan" Foreground="{StaticResource TextMutedBrush}" />
+                        <TextBlock x:Name="PlanCountText" x:FieldModifier="public" FontSize="20" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </StackPanel>
+    </Border>
+</UserControl>

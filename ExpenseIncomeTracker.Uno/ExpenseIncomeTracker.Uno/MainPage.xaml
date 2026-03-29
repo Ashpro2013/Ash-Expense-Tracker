@@ -1,8 +1,9 @@
-﻿<Page x:Class="ExpenseIncomeTracker.Uno.MainPage"
+<Page x:Class="ExpenseIncomeTracker.Uno.MainPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:models="using:ExpenseIncomeTracker.Uno.Models"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:nav="using:ExpenseIncomeTracker.Uno.Views.Navigation"
+      xmlns:sections="using:ExpenseIncomeTracker.Uno.Views.Sections"
       mc:Ignorable="d"
       RequestedTheme="Light">
     <Page.Resources>
@@ -143,402 +144,46 @@
             </Grid.RowDefinitions>
 
             <Border Margin="14,12,14,6" Padding="16,12" Background="{StaticResource PanelBrush}" BorderBrush="#D1FAE5" BorderThickness="1" CornerRadius="16">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <StackPanel>
-                    <TextBlock Text="CashTrack Pro" FontSize="28" FontWeight="SemiBold" Foreground="{StaticResource TextMainBrush}" />
-                    <TextBlock Text="Smart personal finance and productivity companion" Foreground="{StaticResource TextMutedBrush}" />
-                    <TextBlock x:Name="WelcomeText" Foreground="{StaticResource BrandTealBrush}" FontWeight="SemiBold" />
-                </StackPanel>
-                <Button Grid.Column="1"
-                        Content="Sign Out"
-                        Click="SignOutClicked"
-                        VerticalAlignment="Center"
-                        Background="#FFF1F2"
-                        Foreground="#BE123C"
-                        BorderBrush="#FDA4AF" />
-            </Grid>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="CashTrack Pro" FontSize="28" FontWeight="SemiBold" Foreground="{StaticResource TextMainBrush}" />
+                        <TextBlock Text="Smart personal finance and productivity companion" Foreground="{StaticResource TextMutedBrush}" />
+                        <TextBlock x:Name="WelcomeText" Foreground="{StaticResource BrandTealBrush}" FontWeight="SemiBold" />
+                    </StackPanel>
+                    <Button Grid.Column="1"
+                            Content="Sign Out"
+                            Click="SignOutClicked"
+                            VerticalAlignment="Center"
+                            Background="#FFF1F2"
+                            Foreground="#BE123C"
+                            BorderBrush="#FDA4AF" />
+                </Grid>
             </Border>
 
-            <NavigationView Grid.Row="1"
-                            x:Name="RootNav"
-                            IsBackButtonVisible="Collapsed"
-                            PaneDisplayMode="Auto"
-                            Background="#F8FAFC"
-                            Foreground="{StaticResource TextMainBrush}"
-                            SelectionChanged="OnNavSelectionChanged">
-                <NavigationView.MenuItems>
-                    <NavigationViewItem Content="Dashboard" Tag="dashboard" Icon="Home" Foreground="{StaticResource TextMainBrush}" />
-                    <NavigationViewItem Content="Income" Tag="income" Icon="Add" Foreground="{StaticResource TextMainBrush}" />
-                    <NavigationViewItem Content="Expense" Tag="expense" Icon="Remove" Foreground="{StaticResource TextMainBrush}" />
-                    <NavigationViewItem Content="Activities" Tag="activities" Icon="List" Foreground="{StaticResource TextMainBrush}" />
-                    <NavigationViewItem Content="Diary" Tag="diary" Icon="Document" Foreground="{StaticResource TextMainBrush}" />
-                    <NavigationViewItem Content="Plan a Day" Tag="plan" Icon="Calendar" Foreground="{StaticResource TextMainBrush}" />
-                    <NavigationViewItem Content="Album" Tag="album" Icon="Pictures" Foreground="{StaticResource TextMainBrush}" />
-                </NavigationView.MenuItems>
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="250" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
 
-                <ScrollViewer>
+                <nav:SideNavigationControl x:Name="SideNavigation" Grid.Column="0" />
+
+                <ScrollViewer Grid.Column="1">
                     <StackPanel Spacing="16" Padding="18,14,18,20">
-                        <Border x:Name="DashboardSection" Background="{StaticResource PanelBrush}" CornerRadius="18" Padding="18" BorderBrush="#BAE6FD" BorderThickness="1">
-                            <StackPanel Spacing="12">
-                                <TextBlock Text="Dashboard Overview" FontSize="28" FontWeight="SemiBold" />
-                                <TextBlock Text="A quick pulse of your cash flow and productivity." Foreground="{StaticResource TextMutedBrush}" />
-                                <Grid Margin="0,4,0,0">
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-
-                                    <Border Grid.Row="0" Grid.Column="0" Margin="0,0,8,8" Background="#E0F2FE" CornerRadius="12" Padding="12">
-                                        <StackPanel>
-                                            <TextBlock Text="Income" Foreground="{StaticResource TextMutedBrush}" />
-                                            <TextBlock x:Name="IncomeTotalText" FontSize="20" FontWeight="SemiBold" />
-                                        </StackPanel>
-                                    </Border>
-                                    <Border Grid.Row="0" Grid.Column="1" Margin="8,0,0,8" Background="#FEE2E2" CornerRadius="12" Padding="12">
-                                        <StackPanel>
-                                            <TextBlock Text="Expense" Foreground="{StaticResource TextMutedBrush}" />
-                                            <TextBlock x:Name="ExpenseTotalText" FontSize="20" FontWeight="SemiBold" />
-                                        </StackPanel>
-                                    </Border>
-                                    <Border Grid.Row="1" Grid.Column="0" Margin="0,0,8,8" Background="#DCFCE7" CornerRadius="12" Padding="12">
-                                        <StackPanel>
-                                            <TextBlock Text="Balance" Foreground="{StaticResource TextMutedBrush}" />
-                                            <TextBlock x:Name="BalanceText" FontSize="20" FontWeight="SemiBold" />
-                                        </StackPanel>
-                                    </Border>
-                                    <Border Grid.Row="1" Grid.Column="1" Margin="8,0,0,8" Background="#FEF9C3" CornerRadius="12" Padding="12">
-                                        <StackPanel>
-                                            <TextBlock Text="Open Activities" Foreground="{StaticResource TextMutedBrush}" />
-                                            <TextBlock x:Name="ActivityCountText" FontSize="20" FontWeight="SemiBold" />
-                                        </StackPanel>
-                                    </Border>
-                                    <Border Grid.Row="2" Grid.Column="0" Margin="0,0,8,0" Background="#EDE9FE" CornerRadius="12" Padding="12">
-                                        <StackPanel>
-                                            <TextBlock Text="Diary Entries" Foreground="{StaticResource TextMutedBrush}" />
-                                            <TextBlock x:Name="DiaryCountText" FontSize="20" FontWeight="SemiBold" />
-                                        </StackPanel>
-                                    </Border>
-                                    <Border Grid.Row="2" Grid.Column="1" Margin="8,0,0,0" Background="#FFEDD5" CornerRadius="12" Padding="12">
-                                        <StackPanel>
-                                            <TextBlock Text="Plan Items" Foreground="{StaticResource TextMutedBrush}" />
-                                            <TextBlock x:Name="PlanCountText" FontSize="20" FontWeight="SemiBold" />
-                                        </StackPanel>
-                                    </Border>
-                                </Grid>
-                            </StackPanel>
-                        </Border>
-
-                        <Border x:Name="IncomeSection" Visibility="Collapsed" Background="{StaticResource PanelBrush}" CornerRadius="18" Padding="18" BorderBrush="#BAE6FD" BorderThickness="1">
-                            <StackPanel Spacing="14">
-                                <TextBlock Text="Income Manager" FontSize="28" FontWeight="SemiBold" />
-                                <TextBlock Text="Capture salary, bonuses, and other inflows." Foreground="{StaticResource TextMutedBrush}" />
-                                <Border Background="#FFFFFFFF" CornerRadius="12" Padding="12" BorderBrush="#D1FAE5" BorderThickness="1">
-                                    <StackPanel Spacing="10">
-                                        <TextBox x:Name="IncomeTitleBox" Header="Title" />
-                                        <TextBox x:Name="IncomeAmountBox" Header="Amount" />
-                                        <TextBox x:Name="IncomeNoteBox" Header="Note" />
-                                        <Button x:Name="IncomeSaveButton" Content="Add Income" Click="AddIncomeClicked" />
-                                    </StackPanel>
-                                </Border>
-                                <Border Background="#F8FAFC" CornerRadius="12" Padding="8" BorderBrush="#DBEAFE" BorderThickness="1">
-                                <ListView ItemsSource="{x:Bind IncomeEntries, Mode=OneWay}" MaxHeight="420">
-                                    <ListView.ItemTemplate>
-                                        <DataTemplate x:DataType="models:FinanceEntry">
-                                            <Border Background="#FFFFFFFF" CornerRadius="10" BorderBrush="#E2E8F0" BorderThickness="1" Padding="10" Margin="0,0,0,8">
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="Auto" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <StackPanel>
-                                                        <TextBlock Text="{x:Bind Title}" FontWeight="SemiBold" />
-                                                        <TextBlock Text="{x:Bind Note}" Foreground="{StaticResource TextMutedBrush}" />
-                                                    </StackPanel>
-                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                                        <TextBlock Text="{x:Bind Amount}" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="SemiBold" />
-                                                        <Button Content="Edit" Tag="{x:Bind Id}" Click="EditIncomeClicked" Background="#E0F2FE" Foreground="#075985" BorderBrush="#7DD3FC" />
-                                                        <Button Content="Delete" Tag="{x:Bind Id}" Click="DeleteIncomeClicked" Background="#FEE2E2" Foreground="#B91C1C" BorderBrush="#FCA5A5" />
-                                                    </StackPanel>
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ListView.ItemTemplate>
-                                </ListView>
-                                </Border>
-                            </StackPanel>
-                        </Border>
-
-                        <Border x:Name="ExpenseSection" Visibility="Collapsed" Background="{StaticResource PanelBrush}" CornerRadius="18" Padding="18" BorderBrush="#FBCFE8" BorderThickness="1">
-                            <StackPanel Spacing="14">
-                                <TextBlock Text="Expense Manager" FontSize="28" FontWeight="SemiBold" />
-                                <TextBlock Text="Track spending and keep budget discipline." Foreground="{StaticResource TextMutedBrush}" />
-                                <Border Background="#FFFFFFFF" CornerRadius="12" Padding="12" BorderBrush="#FCE7F3" BorderThickness="1">
-                                    <StackPanel Spacing="10">
-                                        <TextBox x:Name="ExpenseTitleBox" Header="Title" />
-                                        <TextBox x:Name="ExpenseAmountBox" Header="Amount" />
-                                        <TextBox x:Name="ExpenseNoteBox" Header="Note" />
-                                        <Button x:Name="ExpenseSaveButton" Content="Add Expense" Click="AddExpenseClicked" />
-                                    </StackPanel>
-                                </Border>
-                                <Border Background="#F8FAFC" CornerRadius="12" Padding="8" BorderBrush="#FBCFE8" BorderThickness="1">
-                                <ListView ItemsSource="{x:Bind ExpenseEntries, Mode=OneWay}" MaxHeight="420">
-                                    <ListView.ItemTemplate>
-                                        <DataTemplate x:DataType="models:FinanceEntry">
-                                            <Border Background="#FFFFFFFF" CornerRadius="10" BorderBrush="#E2E8F0" BorderThickness="1" Padding="10" Margin="0,0,0,8">
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="Auto" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <StackPanel>
-                                                        <TextBlock Text="{x:Bind Title}" FontWeight="SemiBold" />
-                                                        <TextBlock Text="{x:Bind Note}" Foreground="{StaticResource TextMutedBrush}" />
-                                                    </StackPanel>
-                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                                        <TextBlock Text="{x:Bind Amount}" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="SemiBold" />
-                                                        <Button Content="Edit" Tag="{x:Bind Id}" Click="EditExpenseClicked" Background="#E0F2FE" Foreground="#075985" BorderBrush="#7DD3FC" />
-                                                        <Button Content="Delete" Tag="{x:Bind Id}" Click="DeleteExpenseClicked" Background="#FEE2E2" Foreground="#B91C1C" BorderBrush="#FCA5A5" />
-                                                    </StackPanel>
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ListView.ItemTemplate>
-                                </ListView>
-                                </Border>
-                            </StackPanel>
-                        </Border>
-
-                        <Border x:Name="ActivitySection" Visibility="Collapsed" Background="{StaticResource PanelBrush}" CornerRadius="18" Padding="18" BorderBrush="#A7F3D0" BorderThickness="1">
-                            <StackPanel Spacing="14">
-                                <TextBlock Text="Activity Monitoring" FontSize="28" FontWeight="SemiBold" />
-                                <TextBlock Text="Organize tasks, due dates, and completion status." Foreground="{StaticResource TextMutedBrush}" />
-                                <Border Background="#FFFFFFFF" CornerRadius="12" Padding="12" BorderBrush="#A7F3D0" BorderThickness="1">
-                                    <StackPanel Spacing="10">
-                                        <TextBox x:Name="ActivityTitleBox" Header="Title" />
-                                        <TextBox x:Name="ActivityDueDateBox" Header="Due date (yyyy-MM-dd)" />
-                                        <ComboBox x:Name="ActivityStatusBox" Header="Status" SelectedIndex="0">
-                                            <x:String>Planned</x:String>
-                                            <x:String>InProgress</x:String>
-                                            <x:String>Done</x:String>
-                                        </ComboBox>
-                                        <TextBox x:Name="ActivityNoteBox" Header="Notes" />
-                                        <CheckBox x:Name="ActivityImportantBox" Content="Important" />
-                                        <Button x:Name="ActivitySaveButton" Content="Add Activity" Click="AddActivityClicked" />
-                                    </StackPanel>
-                                </Border>
-                                <Border Background="#F8FAFC" CornerRadius="12" Padding="8" BorderBrush="#A7F3D0" BorderThickness="1">
-                                <ListView ItemsSource="{x:Bind ActivityEntries, Mode=OneWay}" MaxHeight="420">
-                                    <ListView.ItemTemplate>
-                                        <DataTemplate x:DataType="models:ActivityItem">
-                                            <Border Background="#FFFFFFFF" CornerRadius="10" BorderBrush="#E2E8F0" BorderThickness="1" Padding="10" Margin="0,0,0,8">
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="Auto" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <StackPanel>
-                                                        <TextBlock Text="{x:Bind Title}" FontWeight="SemiBold" />
-                                                        <TextBlock Text="{x:Bind Description}" Foreground="{StaticResource TextMutedBrush}" />
-                                                        <TextBlock Text="{x:Bind Status}" Foreground="{StaticResource BrandTealBrush}" />
-                                                    </StackPanel>
-                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                                        <Button Content="Edit" Tag="{x:Bind Id}" Click="EditActivityClicked" Background="#E0F2FE" Foreground="#075985" BorderBrush="#7DD3FC" />
-                                                        <Button Content="Done" Tag="{x:Bind Id}" Click="ToggleActivityDoneClicked" Background="#DCFCE7" Foreground="#166534" BorderBrush="#86EFAC" />
-                                                        <Button Content="Delete" Tag="{x:Bind Id}" Click="DeleteActivityClicked" Background="#FEE2E2" Foreground="#B91C1C" BorderBrush="#FCA5A5" />
-                                                    </StackPanel>
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ListView.ItemTemplate>
-                                </ListView>
-                                </Border>
-                            </StackPanel>
-                        </Border>
-
-                        <Border x:Name="DiarySection" Visibility="Collapsed" Background="{StaticResource PanelBrush}" CornerRadius="18" Padding="18" BorderBrush="#C4B5FD" BorderThickness="1">
-                            <StackPanel Spacing="14">
-                                <TextBlock Text="Diary Journal" FontSize="28" FontWeight="SemiBold" />
-                                <TextBlock Text="Capture thoughts, tags, and your mood." Foreground="{StaticResource TextMutedBrush}" />
-                                <Border Background="#FFFFFFFF" CornerRadius="12" Padding="12" BorderBrush="#DDD6FE" BorderThickness="1">
-                                    <StackPanel Spacing="10">
-                                        <TextBox x:Name="DiaryTitleBox" Header="Title" />
-                                        <TextBox x:Name="DiaryContentBox" Header="Content" AcceptsReturn="True" TextWrapping="Wrap" />
-                                        <TextBox x:Name="DiaryTagsBox" Header="Tags (comma separated)" />
-                                        <TextBox x:Name="DiaryMoodBox" Header="Mood (1-5)" />
-                                        <Button x:Name="DiarySaveButton" Content="Add Diary Entry" Click="AddDiaryClicked" />
-                                    </StackPanel>
-                                </Border>
-                                <Border Background="#F8FAFC" CornerRadius="12" Padding="8" BorderBrush="#DDD6FE" BorderThickness="1">
-                                <ListView ItemsSource="{x:Bind DiaryEntries, Mode=OneWay}" MaxHeight="420">
-                                    <ListView.ItemTemplate>
-                                        <DataTemplate x:DataType="models:DiaryEntry">
-                                            <Border Background="#FFFFFFFF" CornerRadius="10" BorderBrush="#E2E8F0" BorderThickness="1" Padding="10" Margin="0,0,0,8">
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="Auto" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <StackPanel>
-                                                        <TextBlock Text="{x:Bind Title}" FontWeight="SemiBold" />
-                                                        <TextBlock Text="{x:Bind Tags}" Foreground="{StaticResource TextMutedBrush}" />
-                                                    </StackPanel>
-                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                                        <TextBlock Text="{x:Bind Mood}" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,6,0" />
-                                                        <Button Content="Edit" Tag="{x:Bind Id}" Click="EditDiaryClicked" Background="#E0F2FE" Foreground="#075985" BorderBrush="#7DD3FC" />
-                                                        <Button Content="Delete" Tag="{x:Bind Id}" Click="DeleteDiaryClicked" Background="#FEE2E2" Foreground="#B91C1C" BorderBrush="#FCA5A5" />
-                                                    </StackPanel>
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ListView.ItemTemplate>
-                                </ListView>
-                                </Border>
-                            </StackPanel>
-                        </Border>
-
-                        <Border x:Name="PlanSection" Visibility="Collapsed" Background="{StaticResource PanelBrush}" CornerRadius="18" Padding="18" BorderBrush="#FED7AA" BorderThickness="1">
-                            <StackPanel Spacing="14">
-                                <TextBlock Text="Plan a Day" FontSize="28" FontWeight="SemiBold" />
-                                <TextBlock Text="Allocate focused time slots and track completion." Foreground="{StaticResource TextMutedBrush}" />
-                                <Border Background="#FFFFFFFF" CornerRadius="12" Padding="12" BorderBrush="#FED7AA" BorderThickness="1">
-                                    <StackPanel Spacing="10">
-                                        <DatePicker x:Name="PlanDatePicker" Header="Date (yyyy-MM-dd)" />
-                                        <TextBox x:Name="PlanTitleBox" Header="Task title" />
-                                        <TimePicker x:Name="PlanStartPicker" Header="Start time (HH:mm)" ClockIdentifier="24HourClock" />
-                                        <TimePicker x:Name="PlanEndPicker" Header="End time (HH:mm)" ClockIdentifier="24HourClock" />
-                                        <TextBox x:Name="PlanNotesBox" Header="Notes" />
-                                        <Button x:Name="PlanSaveButton" Content="Add Plan Item" Click="AddPlanClicked" />
-                                    </StackPanel>
-                                </Border>
-                                <Border Background="#F8FAFC" CornerRadius="12" Padding="8" BorderBrush="#FED7AA" BorderThickness="1">
-                                <ListView ItemsSource="{x:Bind PlanEntries, Mode=OneWay}" MaxHeight="420">
-                                    <ListView.ItemTemplate>
-                                        <DataTemplate x:DataType="models:DayPlanItem">
-                                            <Border Background="#FFFFFFFF" CornerRadius="10" BorderBrush="#E2E8F0" BorderThickness="1" Padding="10" Margin="0,0,0,8">
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="Auto" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <StackPanel>
-                                                        <TextBlock Text="{x:Bind Title}" FontWeight="SemiBold" />
-                                                        <TextBlock Text="{x:Bind Notes}" Foreground="{StaticResource TextMutedBrush}" />
-                                                    </StackPanel>
-                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                                        <TextBlock Text="{x:Bind StartTime}" VerticalAlignment="Center" />
-                                                        <TextBlock Text="-" VerticalAlignment="Center" />
-                                                        <TextBlock Text="{x:Bind EndTime}" VerticalAlignment="Center" Margin="0,0,8,0" />
-                                                        <Button Content="Edit" Tag="{x:Bind Id}" Click="EditPlanClicked" Background="#E0F2FE" Foreground="#075985" BorderBrush="#7DD3FC" />
-                                                        <Button Content="Done" Tag="{x:Bind Id}" Click="TogglePlanClicked" Background="#DCFCE7" Foreground="#166534" BorderBrush="#86EFAC" />
-                                                        <Button Content="Delete" Tag="{x:Bind Id}" Click="DeletePlanClicked" Background="#FEE2E2" Foreground="#B91C1C" BorderBrush="#FCA5A5" />
-                                                    </StackPanel>
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ListView.ItemTemplate>
-                                </ListView>
-                                </Border>
-                            </StackPanel>
-                        </Border>
-
-                        <Border x:Name="AlbumSection" Visibility="Collapsed" Background="{StaticResource PanelBrush}" CornerRadius="18" Padding="18" BorderBrush="#86EFAC" BorderThickness="1">
-                            <StackPanel Spacing="14">
-                                <TextBlock Text="Image Album" FontSize="28" FontWeight="SemiBold" />
-                                <TextBlock Text="Upload from gallery or capture with camera, then browse your album." Foreground="{StaticResource TextMutedBrush}" />
-                                <StackPanel Orientation="Horizontal" Spacing="10">
-                                    <Button Content="Upload from Gallery" Click="PickFromGalleryClicked" Background="#DCFCE7" Foreground="#166534" BorderBrush="#86EFAC" />
-                                    <Button Content="Take Photo" Click="TakePhotoClicked" Background="#E0F2FE" Foreground="#075985" BorderBrush="#7DD3FC" />
-                                </StackPanel>
-                                <TextBlock x:Name="AlbumStatusText" Visibility="Collapsed" Foreground="#166534" />
-                                <Border Background="#FFFFFF" CornerRadius="12" Padding="10" BorderBrush="#D1FAE5" BorderThickness="1">
-                                    <StackPanel Spacing="8">
-                                        <TextBlock Text="Sliding Viewer" FontWeight="SemiBold" />
-                                        <Grid ColumnSpacing="8">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <Button x:Name="AlbumPrevButton"
-                                                    Content="&lt;"
-                                                    Click="ShowPreviousAlbumImageClicked"
-                                                    VerticalAlignment="Center"
-                                                    Background="#F1F5F9"
-                                                    Foreground="#0F172A"
-                                                    BorderBrush="#CBD5E1" />
-                                            <Border Grid.Column="1" CornerRadius="10" BorderBrush="#D1D5DB" BorderThickness="1" Padding="4" MinHeight="260">
-                                                <Grid>
-                                                    <FlipView x:Name="AlbumFlipView"
-                                                              ItemsSource="{x:Bind AlbumEntries, Mode=OneWay}"
-                                                              SelectionChanged="AlbumFlipViewSelectionChanged">
-                                                        <FlipView.ItemTemplate>
-                                                            <DataTemplate x:DataType="models:AlbumImageItem">
-                                                                <Grid>
-                                                                    <Image Source="{x:Bind ImageUri}" Stretch="Uniform" />
-                                                                </Grid>
-                                                            </DataTemplate>
-                                                        </FlipView.ItemTemplate>
-                                                    </FlipView>
-                                                    <TextBlock x:Name="AlbumSlideEmptyText"
-                                                               Text="No images yet. Add one from gallery or camera."
-                                                               Foreground="{StaticResource TextMutedBrush}"
-                                                               HorizontalAlignment="Center"
-                                                               VerticalAlignment="Center"
-                                                               Visibility="Collapsed" />
-                                                </Grid>
-                                            </Border>
-                                            <Button Grid.Column="2"
-                                                    x:Name="AlbumNextButton"
-                                                    Content="&gt;"
-                                                    Click="ShowNextAlbumImageClicked"
-                                                    VerticalAlignment="Center"
-                                                    Background="#F1F5F9"
-                                                    Foreground="#0F172A"
-                                                    BorderBrush="#CBD5E1" />
-                                        </Grid>
-                                        <TextBlock x:Name="AlbumSlideMetaText" Foreground="{StaticResource TextMutedBrush}" />
-                                    </StackPanel>
-                                </Border>
-                                <Border Background="#F8FAFC" CornerRadius="12" Padding="8" BorderBrush="#86EFAC" BorderThickness="1">
-                                <ListView ItemsSource="{x:Bind AlbumEntries, Mode=OneWay}" MaxHeight="520">
-                                    <ListView.ItemTemplate>
-                                        <DataTemplate x:DataType="models:AlbumImageItem">
-                                            <Border Background="#FFFFFFFF" CornerRadius="10" BorderBrush="#DCFCE7" BorderThickness="1" Padding="10" Margin="0,0,0,8">
-                                                <Grid ColumnSpacing="12">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="120" />
-                                                        <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="Auto" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <Border Width="120" Height="90" CornerRadius="8" BorderBrush="#D1D5DB" BorderThickness="1">
-                                                        <Image Source="{x:Bind ImageUri}" Stretch="UniformToFill" />
-                                                    </Border>
-                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
-                                                        <TextBlock Text="{x:Bind OriginalName}" FontWeight="SemiBold" />
-                                                        <TextBlock Text="{x:Bind SourceType}" Foreground="{StaticResource TextMutedBrush}" />
-                                                        <TextBlock Text="{x:Bind AddedOn}" Foreground="{StaticResource TextMutedBrush}" />
-                                                    </StackPanel>
-                                                    <Button Grid.Column="2" Content="Delete" Tag="{x:Bind Id}" Click="DeleteAlbumImageClicked" Background="#FEE2E2" Foreground="#B91C1C" BorderBrush="#FCA5A5" VerticalAlignment="Center" />
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ListView.ItemTemplate>
-                                </ListView>
-                                </Border>
-                            </StackPanel>
-                        </Border>
+                        <sections:DashboardView x:Name="DashboardSection" />
+                        <sections:IncomeView x:Name="IncomeSection" Visibility="Collapsed" />
+                        <sections:ExpenseView x:Name="ExpenseSection" Visibility="Collapsed" />
+                        <sections:ActivityView x:Name="ActivitySection" Visibility="Collapsed" />
+                        <sections:DiaryView x:Name="DiarySection" Visibility="Collapsed" />
+                        <sections:PlanView x:Name="PlanSection" Visibility="Collapsed" />
+                        <sections:AlbumView x:Name="AlbumSection" Visibility="Collapsed" />
                     </StackPanel>
                 </ScrollViewer>
-            </NavigationView>
+            </Grid>
         </Grid>
     </Grid>
 </Page>

@@ -1,7 +1,10 @@
 using System.Collections.ObjectModel;
 using System.IO;
+using ExpenseIncomeTracker.Uno.Interfaces;
 using ExpenseIncomeTracker.Uno.Models;
 using ExpenseIncomeTracker.Uno.Services;
+using ExpenseIncomeTracker.Uno.Views.Navigation;
+using ExpenseIncomeTracker.Uno.Views.Sections;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Windows.Storage;
@@ -12,7 +15,7 @@ namespace ExpenseIncomeTracker.Uno;
 public sealed partial class MainPage : Page
 {
     private const string AlbumFolderName = "album";
-    private readonly LocalStoreService _store = new();
+    private readonly IAppStateService _stateService = new AppStateService(new LocalStoreService());
     private AppState _state = new();
     private string _currentUser = string.Empty;
     private bool _registerMode;
@@ -33,12 +36,105 @@ public sealed partial class MainPage : Page
     public MainPage()
     {
         InitializeComponent();
+        WireSectionBindings();
+        WireSectionEvents();
         Loaded += OnLoaded;
+    }
+
+    private NavigationView RootNav => SideNavigation.RootNav;
+
+    private TextBlock IncomeTotalText => DashboardSection.IncomeTotalText;
+    private TextBlock ExpenseTotalText => DashboardSection.ExpenseTotalText;
+    private TextBlock BalanceText => DashboardSection.BalanceText;
+    private TextBlock ActivityCountText => DashboardSection.ActivityCountText;
+    private TextBlock DiaryCountText => DashboardSection.DiaryCountText;
+    private TextBlock PlanCountText => DashboardSection.PlanCountText;
+
+    private TextBox IncomeTitleBox => IncomeSection.IncomeTitleBox;
+    private TextBox IncomeAmountBox => IncomeSection.IncomeAmountBox;
+    private TextBox IncomeNoteBox => IncomeSection.IncomeNoteBox;
+    private Button IncomeSaveButton => IncomeSection.IncomeSaveButton;
+
+    private TextBox ExpenseTitleBox => ExpenseSection.ExpenseTitleBox;
+    private TextBox ExpenseAmountBox => ExpenseSection.ExpenseAmountBox;
+    private TextBox ExpenseNoteBox => ExpenseSection.ExpenseNoteBox;
+    private Button ExpenseSaveButton => ExpenseSection.ExpenseSaveButton;
+
+    private TextBox ActivityTitleBox => ActivitySection.ActivityTitleBox;
+    private TextBox ActivityDueDateBox => ActivitySection.ActivityDueDateBox;
+    private ComboBox ActivityStatusBox => ActivitySection.ActivityStatusBox;
+    private TextBox ActivityNoteBox => ActivitySection.ActivityNoteBox;
+    private CheckBox ActivityImportantBox => ActivitySection.ActivityImportantBox;
+    private Button ActivitySaveButton => ActivitySection.ActivitySaveButton;
+
+    private TextBox DiaryTitleBox => DiarySection.DiaryTitleBox;
+    private TextBox DiaryContentBox => DiarySection.DiaryContentBox;
+    private TextBox DiaryTagsBox => DiarySection.DiaryTagsBox;
+    private TextBox DiaryMoodBox => DiarySection.DiaryMoodBox;
+    private Button DiarySaveButton => DiarySection.DiarySaveButton;
+
+    private DatePicker PlanDatePicker => PlanSection.PlanDatePicker;
+    private TextBox PlanTitleBox => PlanSection.PlanTitleBox;
+    private TimePicker PlanStartPicker => PlanSection.PlanStartPicker;
+    private TimePicker PlanEndPicker => PlanSection.PlanEndPicker;
+    private TextBox PlanNotesBox => PlanSection.PlanNotesBox;
+    private Button PlanSaveButton => PlanSection.PlanSaveButton;
+
+    private TextBlock AlbumStatusText => AlbumSection.AlbumStatusText;
+    private Button AlbumPrevButton => AlbumSection.AlbumPrevButton;
+    private FlipView AlbumFlipView => AlbumSection.AlbumFlipView;
+    private TextBlock AlbumSlideEmptyText => AlbumSection.AlbumSlideEmptyText;
+    private Button AlbumNextButton => AlbumSection.AlbumNextButton;
+    private TextBlock AlbumSlideMetaText => AlbumSection.AlbumSlideMetaText;
+
+    private void WireSectionBindings()
+    {
+        IncomeSection.IncomeListView.ItemsSource = IncomeEntries;
+        ExpenseSection.ExpenseListView.ItemsSource = ExpenseEntries;
+        ActivitySection.ActivityListView.ItemsSource = ActivityEntries;
+        DiarySection.DiaryListView.ItemsSource = DiaryEntries;
+        PlanSection.PlanListView.ItemsSource = PlanEntries;
+        AlbumSection.AlbumListView.ItemsSource = AlbumEntries;
+        AlbumSection.AlbumFlipView.ItemsSource = AlbumEntries;
+    }
+
+    private void WireSectionEvents()
+    {
+        RootNav.SelectionChanged += OnNavSelectionChanged;
+
+        IncomeSection.AddIncomeRequested += AddIncomeClicked;
+        IncomeSection.EditIncomeRequested += EditIncomeClicked;
+        IncomeSection.DeleteIncomeRequested += DeleteIncomeClicked;
+
+        ExpenseSection.AddExpenseRequested += AddExpenseClicked;
+        ExpenseSection.EditExpenseRequested += EditExpenseClicked;
+        ExpenseSection.DeleteExpenseRequested += DeleteExpenseClicked;
+
+        ActivitySection.AddActivityRequested += AddActivityClicked;
+        ActivitySection.EditActivityRequested += EditActivityClicked;
+        ActivitySection.ToggleActivityDoneRequested += ToggleActivityDoneClicked;
+        ActivitySection.DeleteActivityRequested += DeleteActivityClicked;
+
+        DiarySection.AddDiaryRequested += AddDiaryClicked;
+        DiarySection.EditDiaryRequested += EditDiaryClicked;
+        DiarySection.DeleteDiaryRequested += DeleteDiaryClicked;
+
+        PlanSection.AddPlanRequested += AddPlanClicked;
+        PlanSection.EditPlanRequested += EditPlanClicked;
+        PlanSection.TogglePlanRequested += TogglePlanClicked;
+        PlanSection.DeletePlanRequested += DeletePlanClicked;
+
+        AlbumSection.PickFromGalleryRequested += PickFromGalleryClicked;
+        AlbumSection.TakePhotoRequested += TakePhotoClicked;
+        AlbumSection.DeleteAlbumImageRequested += DeleteAlbumImageClicked;
+        AlbumSection.ShowPreviousAlbumImageRequested += ShowPreviousAlbumImageClicked;
+        AlbumSection.ShowNextAlbumImageRequested += ShowNextAlbumImageClicked;
+        AlbumSection.AlbumFlipSelectionChanged += AlbumFlipViewSelectionChanged;
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
-        _state = await _store.LoadAsync();
+        _state = await _stateService.LoadAsync();
         if (!string.IsNullOrWhiteSpace(_state.CurrentUserEmail))
         {
             _currentUser = _state.CurrentUserEmail;
@@ -108,7 +204,7 @@ public sealed partial class MainPage : Page
             _state.Users.Add(new UserAccount { Email = email, Password = password });
             _state.CurrentUserEmail = email;
             _currentUser = email;
-            await _store.SaveAsync(_state);
+            await _stateService.SaveAsync(_state);
             ShowApp();
             return;
         }
@@ -125,7 +221,7 @@ public sealed partial class MainPage : Page
 
         _state.CurrentUserEmail = account.Email;
         _currentUser = account.Email;
-        await _store.SaveAsync(_state);
+        await _stateService.SaveAsync(_state);
         ShowApp();
     }
 
@@ -138,7 +234,7 @@ public sealed partial class MainPage : Page
     {
         _state.CurrentUserEmail = null;
         _currentUser = string.Empty;
-        await _store.SaveAsync(_state);
+        await _stateService.SaveAsync(_state);
         ShowAuth();
     }
 
@@ -217,7 +313,7 @@ public sealed partial class MainPage : Page
 
     private async Task SaveAndRefreshAsync()
     {
-        await _store.SaveAsync(_state);
+        await _stateService.SaveAsync(_state);
         RefreshView();
     }
 
