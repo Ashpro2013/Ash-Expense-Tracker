@@ -23,6 +23,8 @@
                 <NavigationViewItem Content="Diary" Tag="diary" Icon="Document" />
                 <NavigationViewItem Content="Plan a Day" Tag="plan" Icon="Calendar" />
                 <NavigationViewItem Content="Album" Tag="album" Icon="Pictures" />
+                <NavigationViewItem Content="Address Book" Tag="addressbook" Icon="Contact" />
+                <NavigationViewItem Content="Password Directory" Tag="passwords" Icon="Permissions" />
             </NavigationView.MenuItems>
             <Grid />
         </NavigationView>

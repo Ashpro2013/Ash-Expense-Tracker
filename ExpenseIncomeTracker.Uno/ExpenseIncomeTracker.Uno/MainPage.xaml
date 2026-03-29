@@ -181,6 +181,8 @@
                         <sections:DiaryView x:Name="DiarySection" Visibility="Collapsed" />
                         <sections:PlanView x:Name="PlanSection" Visibility="Collapsed" />
                         <sections:AlbumView x:Name="AlbumSection" Visibility="Collapsed" />
+                        <sections:AddressBookView x:Name="AddressBookSection" Visibility="Collapsed" />
+                        <sections:PasswordDirectoryView x:Name="PasswordDirectorySection" Visibility="Collapsed" />
                     </StackPanel>
                 </ScrollViewer>
             </Grid>

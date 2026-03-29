@@ -6,6 +6,8 @@ namespace ExpenseIncomeTracker.Uno;
 
 public partial class App : Application
 {
+    private bool _mainWindowCloseHandlerAttached;
+
     /// <summary>
     /// Initializes the singleton application object. This is the first line of authored code
     /// executed, and as such is the logical equivalent of main() or WinMain().
@@ -20,6 +22,7 @@ public partial class App : Application
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
         MainWindow = new Window();
+        AttachMainWindowLifetimeHandlers();
 #if DEBUG
         MainWindow.UseStudio();
 #endif
@@ -49,6 +52,23 @@ public partial class App : Application
         MainWindow.SetWindowIcon();
         // Ensure the current window is active
         MainWindow.Activate();
+    }
+
+    private void AttachMainWindowLifetimeHandlers()
+    {
+        if (MainWindow is null || _mainWindowCloseHandlerAttached)
+        {
+            return;
+        }
+
+        MainWindow.Closed += OnMainWindowClosed;
+        _mainWindowCloseHandlerAttached = true;
+    }
+
+    private static void OnMainWindowClosed(object sender, WindowEventArgs args)
+    {
+        // Ensure the whole process exits when the primary window is closed.
+        Environment.Exit(0);
     }
 
     /// <summary>

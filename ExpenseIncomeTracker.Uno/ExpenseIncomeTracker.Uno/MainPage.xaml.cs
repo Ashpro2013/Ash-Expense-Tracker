@@ -25,6 +25,8 @@ public sealed partial class MainPage : Page
     private string? _editingActivityId;
     private string? _editingDiaryId;
     private string? _editingPlanId;
+    private string? _editingAddressBookId;
+    private string? _editingPasswordDirectoryId;
 
     public ObservableCollection<FinanceEntry> IncomeEntries { get; } = new();
     public ObservableCollection<FinanceEntry> ExpenseEntries { get; } = new();
@@ -32,6 +34,8 @@ public sealed partial class MainPage : Page
     public ObservableCollection<DiaryEntry> DiaryEntries { get; } = new();
     public ObservableCollection<DayPlanItem> PlanEntries { get; } = new();
     public ObservableCollection<AlbumImageItem> AlbumEntries { get; } = new();
+    public ObservableCollection<AddressBookEntry> AddressBookEntries { get; } = new();
+    public ObservableCollection<PasswordDirectoryEntry> PasswordDirectoryEntries { get; } = new();
 
     public MainPage()
     {
@@ -87,6 +91,19 @@ public sealed partial class MainPage : Page
     private Button AlbumNextButton => AlbumSection.AlbumNextButton;
     private TextBlock AlbumSlideMetaText => AlbumSection.AlbumSlideMetaText;
 
+    private TextBox AddressNameBox => AddressBookSection.AddressNameBox;
+    private TextBox AddressAddressBox => AddressBookSection.AddressAddressBox;
+    private TextBox AddressPhoneBox => AddressBookSection.AddressPhoneBox;
+    private TextBox AddressEmailBox => AddressBookSection.AddressEmailBox;
+    private TextBox AddressRemarksBox => AddressBookSection.AddressRemarksBox;
+    private Button AddressSaveButton => AddressBookSection.AddressSaveButton;
+
+    private TextBox PasswordTitleBox => PasswordDirectorySection.PasswordTitleBox;
+    private TextBox PasswordUsernameBox => PasswordDirectorySection.PasswordUsernameBox;
+    private TextBox PasswordValueBox => PasswordDirectorySection.PasswordValueBox;
+    private TextBox PasswordNotesBox => PasswordDirectorySection.PasswordNotesBox;
+    private Button PasswordSaveButton => PasswordDirectorySection.PasswordSaveButton;
+
     private void WireSectionBindings()
     {
         IncomeSection.IncomeListView.ItemsSource = IncomeEntries;
@@ -96,6 +113,8 @@ public sealed partial class MainPage : Page
         PlanSection.PlanListView.ItemsSource = PlanEntries;
         AlbumSection.AlbumListView.ItemsSource = AlbumEntries;
         AlbumSection.AlbumFlipView.ItemsSource = AlbumEntries;
+        AddressBookSection.AddressListView.ItemsSource = AddressBookEntries;
+        PasswordDirectorySection.PasswordListView.ItemsSource = PasswordDirectoryEntries;
     }
 
     private void WireSectionEvents()
@@ -130,6 +149,14 @@ public sealed partial class MainPage : Page
         AlbumSection.ShowPreviousAlbumImageRequested += ShowPreviousAlbumImageClicked;
         AlbumSection.ShowNextAlbumImageRequested += ShowNextAlbumImageClicked;
         AlbumSection.AlbumFlipSelectionChanged += AlbumFlipViewSelectionChanged;
+
+        AddressBookSection.AddAddressRequested += AddAddressClicked;
+        AddressBookSection.EditAddressRequested += EditAddressClicked;
+        AddressBookSection.DeleteAddressRequested += DeleteAddressClicked;
+
+        PasswordDirectorySection.AddPasswordRequested += AddPasswordClicked;
+        PasswordDirectorySection.EditPasswordRequested += EditPasswordClicked;
+        PasswordDirectorySection.DeletePasswordRequested += DeletePasswordClicked;
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -259,6 +286,12 @@ public sealed partial class MainPage : Page
     private IEnumerable<AlbumImageItem> UserAlbumImages()
         => _state.AlbumImages.Where(item => item.UserEmail == _currentUser);
 
+    private IEnumerable<AddressBookEntry> UserAddressBookEntries()
+        => _state.AddressBookEntries.Where(item => item.UserEmail == _currentUser);
+
+    private IEnumerable<PasswordDirectoryEntry> UserPasswordDirectoryEntries()
+        => _state.PasswordDirectoryEntries.Where(item => item.UserEmail == _currentUser);
+
     private void RefreshView()
     {
         IncomeEntries.Clear();
@@ -297,6 +330,18 @@ public sealed partial class MainPage : Page
             AlbumEntries.Add(item);
         }
         UpdateAlbumSlideState();
+
+        AddressBookEntries.Clear();
+        foreach (var item in UserAddressBookEntries().OrderBy(item => item.Name))
+        {
+            AddressBookEntries.Add(item);
+        }
+
+        PasswordDirectoryEntries.Clear();
+        foreach (var item in UserPasswordDirectoryEntries().OrderBy(item => item.Title))
+        {
+            PasswordDirectoryEntries.Add(item);
+        }
 
         var income = UserFinance(FinanceType.Income).Sum(item => item.Amount);
         var expense = UserFinance(FinanceType.Expense).Sum(item => item.Amount);
@@ -347,6 +392,8 @@ public sealed partial class MainPage : Page
         DiarySection.Visibility = Visibility.Collapsed;
         PlanSection.Visibility = Visibility.Collapsed;
         AlbumSection.Visibility = Visibility.Collapsed;
+        AddressBookSection.Visibility = Visibility.Collapsed;
+        PasswordDirectorySection.Visibility = Visibility.Collapsed;
 
         switch (section)
         {
@@ -367,6 +414,12 @@ public sealed partial class MainPage : Page
                 break;
             case "album":
                 AlbumSection.Visibility = Visibility.Visible;
+                break;
+            case "addressbook":
+                AddressBookSection.Visibility = Visibility.Visible;
+                break;
+            case "passwords":
+                PasswordDirectorySection.Visibility = Visibility.Visible;
                 break;
             default:
                 DashboardSection.Visibility = Visibility.Visible;
@@ -798,6 +851,162 @@ public sealed partial class MainPage : Page
 
         _state.DayPlanItems.RemoveAll(item => item.Id == id && item.UserEmail == _currentUser);
         await SaveAndRefreshAsync();
+    }
+
+    private async void AddAddressClicked(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(AddressNameBox.Text))
+        {
+            return;
+        }
+
+        if (_editingAddressBookId is null)
+        {
+            _state.AddressBookEntries.Add(new AddressBookEntry
+            {
+                UserEmail = _currentUser,
+                Name = AddressNameBox.Text.Trim(),
+                Address = (AddressAddressBox.Text ?? string.Empty).Trim(),
+                PhoneNo = (AddressPhoneBox.Text ?? string.Empty).Trim(),
+                Email = (AddressEmailBox.Text ?? string.Empty).Trim(),
+                Remarks = (AddressRemarksBox.Text ?? string.Empty).Trim()
+            });
+        }
+        else
+        {
+            var existing = _state.AddressBookEntries.FirstOrDefault(item => item.Id == _editingAddressBookId && item.UserEmail == _currentUser);
+            if (existing is not null)
+            {
+                existing.Name = AddressNameBox.Text.Trim();
+                existing.Address = (AddressAddressBox.Text ?? string.Empty).Trim();
+                existing.PhoneNo = (AddressPhoneBox.Text ?? string.Empty).Trim();
+                existing.Email = (AddressEmailBox.Text ?? string.Empty).Trim();
+                existing.Remarks = (AddressRemarksBox.Text ?? string.Empty).Trim();
+            }
+        }
+
+        _editingAddressBookId = null;
+        AddressSaveButton.Content = "Add Address Entry";
+        ResetAddressInputs();
+        await SaveAndRefreshAsync();
+    }
+
+    private void EditAddressClicked(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string id })
+        {
+            return;
+        }
+
+        var existing = _state.AddressBookEntries.FirstOrDefault(item => item.Id == id && item.UserEmail == _currentUser);
+        if (existing is null)
+        {
+            return;
+        }
+
+        _editingAddressBookId = existing.Id;
+        AddressNameBox.Text = existing.Name;
+        AddressAddressBox.Text = existing.Address;
+        AddressPhoneBox.Text = existing.PhoneNo;
+        AddressEmailBox.Text = existing.Email;
+        AddressRemarksBox.Text = existing.Remarks;
+        AddressSaveButton.Content = "Update Address Entry";
+    }
+
+    private async void DeleteAddressClicked(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string id })
+        {
+            return;
+        }
+
+        _state.AddressBookEntries.RemoveAll(item => item.Id == id && item.UserEmail == _currentUser);
+        await SaveAndRefreshAsync();
+    }
+
+    private async void AddPasswordClicked(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(PasswordTitleBox.Text))
+        {
+            return;
+        }
+
+        if (_editingPasswordDirectoryId is null)
+        {
+            _state.PasswordDirectoryEntries.Add(new PasswordDirectoryEntry
+            {
+                UserEmail = _currentUser,
+                Title = PasswordTitleBox.Text.Trim(),
+                Username = (PasswordUsernameBox.Text ?? string.Empty).Trim(),
+                Password = PasswordValueBox.Text ?? string.Empty,
+                Notes = (PasswordNotesBox.Text ?? string.Empty).Trim()
+            });
+        }
+        else
+        {
+            var existing = _state.PasswordDirectoryEntries.FirstOrDefault(item => item.Id == _editingPasswordDirectoryId && item.UserEmail == _currentUser);
+            if (existing is not null)
+            {
+                existing.Title = PasswordTitleBox.Text.Trim();
+                existing.Username = (PasswordUsernameBox.Text ?? string.Empty).Trim();
+                existing.Password = PasswordValueBox.Text ?? string.Empty;
+                existing.Notes = (PasswordNotesBox.Text ?? string.Empty).Trim();
+            }
+        }
+
+        _editingPasswordDirectoryId = null;
+        PasswordSaveButton.Content = "Add Password Entry";
+        ResetPasswordInputs();
+        await SaveAndRefreshAsync();
+    }
+
+    private void EditPasswordClicked(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string id })
+        {
+            return;
+        }
+
+        var existing = _state.PasswordDirectoryEntries.FirstOrDefault(item => item.Id == id && item.UserEmail == _currentUser);
+        if (existing is null)
+        {
+            return;
+        }
+
+        _editingPasswordDirectoryId = existing.Id;
+        PasswordTitleBox.Text = existing.Title;
+        PasswordUsernameBox.Text = existing.Username;
+        PasswordValueBox.Text = existing.Password;
+        PasswordNotesBox.Text = existing.Notes;
+        PasswordSaveButton.Content = "Update Password Entry";
+    }
+
+    private async void DeletePasswordClicked(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string id })
+        {
+            return;
+        }
+
+        _state.PasswordDirectoryEntries.RemoveAll(item => item.Id == id && item.UserEmail == _currentUser);
+        await SaveAndRefreshAsync();
+    }
+
+    private void ResetAddressInputs()
+    {
+        AddressNameBox.Text = string.Empty;
+        AddressAddressBox.Text = string.Empty;
+        AddressPhoneBox.Text = string.Empty;
+        AddressEmailBox.Text = string.Empty;
+        AddressRemarksBox.Text = string.Empty;
+    }
+
+    private void ResetPasswordInputs()
+    {
+        PasswordTitleBox.Text = string.Empty;
+        PasswordUsernameBox.Text = string.Empty;
+        PasswordValueBox.Text = string.Empty;
+        PasswordNotesBox.Text = string.Empty;
     }
 
     private async void PickFromGalleryClicked(object sender, RoutedEventArgs e)
