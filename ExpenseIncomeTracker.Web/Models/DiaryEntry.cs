@@ -1,12 +1,10 @@
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
+using System.ComponentModel.DataAnnotations;
 
 namespace ExpenseIncomeTracker.Web.Models;
 
 public sealed class DiaryEntry
 {
-    [BsonId]
-    [BsonRepresentation(BsonType.ObjectId)]
+    [Key]
     public string? Id { get; set; }
 
     public string UserId { get; set; } = string.Empty;

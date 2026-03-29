@@ -1,60 +1,88 @@
+using ExpenseIncomeTracker.Web.Persistence;
 using ExpenseIncomeTracker.Web.Models;
-using MongoDB.Driver;
+using Microsoft.EntityFrameworkCore;
 
 namespace ExpenseIncomeTracker.Web.Services;
 
 public sealed class ActivityService
 {
-    private readonly IMongoCollection<ActivityItem> _activities;
+    private readonly WebAppDbContext _db;
 
-    public ActivityService(IMongoDatabase database)
+    public ActivityService(WebAppDbContext db)
     {
-        _activities = database.GetCollection<ActivityItem>("activities");
+        _db = db;
     }
 
     public async Task<List<ActivityItem>> GetAllAsync(string userId)
     {
-        var filter = Builders<ActivityItem>.Filter.Eq(activity => activity.UserId, userId);
-        return await MongoAuthGuard.RunAsync(async () =>
-            await _activities.Find(filter)
-                .SortByDescending(activity => activity.DueDate)
-                .ToListAsync());
+        return await _db.Set<ActivityItem>()
+            .AsNoTracking()
+            .Where(activity => activity.UserId == userId)
+            .OrderBy(activity => activity.Status)
+            .ThenBy(activity => activity.DueDate ?? DateTime.MaxValue)
+            .ToListAsync();
     }
 
     public async Task<List<ActivityItem>> GetUpcomingAsync(string userId, int limit)
     {
-        var filter = Builders<ActivityItem>.Filter.Eq(activity => activity.UserId, userId)
-            & Builders<ActivityItem>.Filter.Ne(activity => activity.Status, ActivityStatus.Done);
-        return await MongoAuthGuard.RunAsync(async () =>
-            await _activities.Find(filter)
-                .SortBy(activity => activity.DueDate)
-                .Limit(limit)
-                .ToListAsync());
+        return await _db.Set<ActivityItem>()
+            .AsNoTracking()
+            .Where(activity => activity.UserId == userId && activity.Status != ActivityStatus.Done)
+            .OrderBy(activity => activity.DueDate ?? DateTime.MaxValue)
+            .Take(limit)
+            .ToListAsync();
     }
 
     public async Task CreateAsync(ActivityItem item)
     {
+        item.Id ??= Guid.NewGuid().ToString("N");
         item.CreatedAt = DateTime.UtcNow;
-        await MongoAuthGuard.RunAsync(async () => await _activities.InsertOneAsync(item));
+        _db.Set<ActivityItem>().Add(item);
+        await _db.SaveChangesAsync();
     }
 
     public async Task UpdateAsync(ActivityItem item)
     {
+        if (string.IsNullOrWhiteSpace(item.Id))
+        {
+            return;
+        }
+
+        var existing = await _db.Set<ActivityItem>()
+            .FirstOrDefaultAsync(activity => activity.Id == item.Id && activity.UserId == item.UserId);
+
+        if (existing is null)
+        {
+            return;
+        }
+
         if (item.Status == ActivityStatus.Done && item.CompletedAt is null)
         {
             item.CompletedAt = DateTime.UtcNow;
         }
 
-        var filter = Builders<ActivityItem>.Filter.Eq(activity => activity.Id, item.Id)
-            & Builders<ActivityItem>.Filter.Eq(activity => activity.UserId, item.UserId);
-        await MongoAuthGuard.RunAsync(async () =>
-            await _activities.ReplaceOneAsync(filter, item, new ReplaceOptions { IsUpsert = false }));
+        existing.Title = item.Title;
+        existing.Description = item.Description;
+        existing.Category = item.Category;
+        existing.Status = item.Status;
+        existing.StartDate = item.StartDate;
+        existing.DueDate = item.DueDate;
+        existing.IsImportant = item.IsImportant;
+        existing.CompletedAt = item.CompletedAt;
+
+        await _db.SaveChangesAsync();
     }
 
     public async Task DeleteAsync(string id, string userId)
     {
-        var filter = Builders<ActivityItem>.Filter.Eq(activity => activity.Id, id)
-            & Builders<ActivityItem>.Filter.Eq(activity => activity.UserId, userId);
-        await MongoAuthGuard.RunAsync(async () => await _activities.DeleteOneAsync(filter));
+        var existing = await _db.Set<ActivityItem>()
+            .FirstOrDefaultAsync(activity => activity.Id == id && activity.UserId == userId);
+        if (existing is null)
+        {
+            return;
+        }
+
+        _db.Set<ActivityItem>().Remove(existing);
+        await _db.SaveChangesAsync();
     }
 }

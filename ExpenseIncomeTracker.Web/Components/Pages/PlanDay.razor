@@ -1,0 +1,256 @@
+@page "/plan-day"
+@attribute [Authorize]
+
+<PageTitle>Plan a Day</PageTitle>
+
+<div class="page-head">
+    <div>
+        <FluentLabel Typo="Typography.PageTitle">Plan a Day</FluentLabel>
+        <p class="page-subtitle">Manage your daily schedule with focused time blocks.</p>
+    </div>
+</div>
+
+<div class="two-column">
+    <FluentCard class="panel-card">
+        <div class="panel-header">
+            <FluentLabel Typo="Typography.H5">@(_editingId is null ? "Add time block" : "Edit time block")</FluentLabel>
+        </div>
+        <EditForm Model="_form" OnValidSubmit="SavePlan">
+            <DataAnnotationsValidator />
+            <div class="form-stack">
+                <FluentDatePicker Label="Plan date" @bind-Value="_form.PlanDate" />
+                <FluentTextField Label="Title" Required="true" @bind-Value="_form.Title" />
+                <FluentTextField Label="Start time (HH:mm)" Placeholder="09:00" @bind-Value="_form.StartTime" />
+                <FluentTextField Label="End time (HH:mm)" Placeholder="10:30" @bind-Value="_form.EndTime" />
+                <FluentTextArea Label="Notes" Rows="4" @bind-Value="_form.Notes" />
+
+                @if (!string.IsNullOrWhiteSpace(_formError))
+                {
+                    <div class="form-error">@_formError</div>
+                }
+
+                <div class="form-actions">
+                    <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit" Loading="_saving">Save block</FluentButton>
+                    @if (_editingId is not null)
+                    {
+                        <FluentButton Appearance="Appearance.Outline" OnClick="ResetForm">Cancel</FluentButton>
+                    }
+                </div>
+            </div>
+        </EditForm>
+    </FluentCard>
+
+    <FluentCard class="panel-card">
+        <div class="panel-header">
+            <FluentLabel Typo="Typography.H5">Daily plan</FluentLabel>
+            <div class="button-row">
+                <FluentDatePicker Label="View date" @bind-Value="_selectedDate" />
+                <FluentButton Appearance="Appearance.Outline" OnClick="LoadForSelectedDate">Load</FluentButton>
+            </div>
+        </div>
+        <div class="list-stack">
+            @if (_plans.Count == 0)
+            {
+                <p class="empty-state">No plans for this day. Add your first time block.</p>
+            }
+            else
+            {
+                @foreach (var plan in _plans)
+                {
+                    <div class="entry-card">
+                        <div class="entry-info">
+                            <div class="item-title">@plan.Title</div>
+                            <div class="item-meta">@plan.StartTime - @plan.EndTime</div>
+                            <div class="item-meta">@(!string.IsNullOrWhiteSpace(plan.Notes) ? plan.Notes : "No notes")</div>
+                        </div>
+                        <div class="entry-actions">
+                            <span class="status-pill @(plan.IsCompleted ? "status-done" : "status-planned")">
+                                @(plan.IsCompleted ? "Done" : "Planned")
+                            </span>
+                            <div class="button-row">
+                                <FluentButton Appearance="Appearance.Outline" OnClick="@(() => StartEdit(plan))">Edit</FluentButton>
+                                <FluentButton Appearance="Appearance.Outline" OnClick="@(() => ToggleDone(plan))">
+                                    @(plan.IsCompleted ? "Mark planned" : "Mark done")
+                                </FluentButton>
+                                <FluentButton Appearance="Appearance.Outline" OnClick="@(() => DeletePlan(plan))">Delete</FluentButton>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </FluentCard>
+</div>
+
+@code {
+    [Inject] private DayPlanService DayPlanService { get; set; } = default!;
+    [Inject] private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+
+    private readonly List<DayPlanItem> _plans = new();
+    private string _userId = string.Empty;
+    private string? _editingId;
+    private bool _saving;
+    private string? _formError;
+    private DateTime? _selectedDate = DateTime.Today;
+    private PlanForm _form = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _userId = await GetUserIdAsync();
+        _form.PlanDate = _selectedDate ?? DateTime.Today;
+        await LoadPlans();
+    }
+
+    private async Task LoadPlans()
+    {
+        _plans.Clear();
+        if (string.IsNullOrWhiteSpace(_userId))
+        {
+            return;
+        }
+
+        _plans.AddRange(await DayPlanService.GetByDateAsync(_userId, _selectedDate ?? DateTime.Today));
+    }
+
+    private async Task SavePlan()
+    {
+        if (string.IsNullOrWhiteSpace(_form.Title))
+        {
+            _formError = "Title is required.";
+            return;
+        }
+
+        if (!IsValidTime(_form.StartTime) || !IsValidTime(_form.EndTime))
+        {
+            _formError = "Start and end time must be in HH:mm format.";
+            return;
+        }
+
+        if (string.CompareOrdinal(_form.StartTime, _form.EndTime) >= 0)
+        {
+            _formError = "End time must be after start time.";
+            return;
+        }
+
+        _saving = true;
+        _formError = null;
+
+        var item = new DayPlanItem
+        {
+            Id = _editingId,
+            UserId = _userId,
+            PlanDate = (_form.PlanDate ?? DateTime.Today).Date,
+            Title = _form.Title.Trim(),
+            StartTime = _form.StartTime,
+            EndTime = _form.EndTime,
+            Notes = string.IsNullOrWhiteSpace(_form.Notes) ? null : _form.Notes.Trim()
+        };
+
+        if (_editingId is null)
+        {
+            await DayPlanService.CreateAsync(item);
+        }
+        else
+        {
+            var old = _plans.FirstOrDefault(p => p.Id == _editingId);
+            if (old is not null)
+            {
+                item.IsCompleted = old.IsCompleted;
+            }
+
+            await DayPlanService.UpdateAsync(item);
+        }
+
+        _selectedDate = item.PlanDate;
+        await LoadPlans();
+        ResetForm();
+        _saving = false;
+    }
+
+    private void StartEdit(DayPlanItem plan)
+    {
+        _editingId = plan.Id;
+        _form = new PlanForm
+        {
+            PlanDate = plan.PlanDate,
+            Title = plan.Title,
+            StartTime = plan.StartTime,
+            EndTime = plan.EndTime,
+            Notes = plan.Notes
+        };
+    }
+
+    private async Task ToggleDone(DayPlanItem plan)
+    {
+        if (string.IsNullOrWhiteSpace(plan.Id))
+        {
+            return;
+        }
+
+        await DayPlanService.ToggleCompletionAsync(plan.Id, _userId);
+        await LoadPlans();
+    }
+
+    private async Task DeletePlan(DayPlanItem plan)
+    {
+        if (string.IsNullOrWhiteSpace(plan.Id))
+        {
+            return;
+        }
+
+        await DayPlanService.DeleteAsync(plan.Id, _userId);
+        await LoadPlans();
+        if (_editingId == plan.Id)
+        {
+            ResetForm();
+        }
+    }
+
+    private async Task LoadForSelectedDate()
+    {
+        _form.PlanDate = _selectedDate ?? DateTime.Today;
+        await LoadPlans();
+    }
+
+    private void ResetForm()
+    {
+        _editingId = null;
+        _formError = null;
+            _form = new PlanForm
+        {
+            PlanDate = _selectedDate ?? DateTime.Today
+        };
+    }
+
+    private static bool IsValidTime(string value)
+    {
+        return DateTime.TryParseExact(
+            value,
+            "HH:mm",
+            System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.None,
+            out _);
+    }
+
+    private async Task<string> GetUserIdAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        return authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+    }
+
+    private sealed class PlanForm
+    {
+        public DateTime? PlanDate { get; set; } = DateTime.Today;
+
+        [Required]
+        public string Title { get; set; } = string.Empty;
+
+        [Required]
+        public string StartTime { get; set; } = "09:00";
+
+        [Required]
+        public string EndTime { get; set; } = "10:00";
+
+        public string? Notes { get; set; }
+    }
+}

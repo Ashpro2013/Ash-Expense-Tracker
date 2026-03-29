@@ -2,7 +2,7 @@ using ExpenseIncomeTracker.Infrastructure;
 using ExpenseIncomeTracker.Infrastructure.Identity;
 using ExpenseIncomeTracker.Infrastructure.Persistence;
 using ExpenseIncomeTracker.Web.Components;
-using ExpenseIncomeTracker.Web.Models;
+using ExpenseIncomeTracker.Web.Persistence;
 using ExpenseIncomeTracker.Web.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
@@ -10,8 +10,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.FluentUI.AspNetCore.Components;
-using Microsoft.Extensions.Options;
-using MongoDB.Driver;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,58 +21,12 @@ builder.Services.AddScoped<AuthenticationStateProvider, ServerAuthenticationStat
 builder.Services.AddHttpClient();
 builder.Services.AddFluentUIComponents();
 builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.Configure<MongoDbSettings>(builder.Configuration.GetSection(MongoDbSettings.SectionName));
-builder.Services.AddSingleton<IMongoClient>(sp =>
-{
-    var settings = sp.GetRequiredService<IOptions<MongoDbSettings>>().Value;
-    var connectionString = settings.ConnectionString;
-    if (connectionString.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
-    {
-        connectionString = $"mongodb://{connectionString["http://".Length..]}";
-    }
-    else if (connectionString.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-    {
-        connectionString = $"mongodb://{connectionString["https://".Length..]}";
-    }
-    var urlBuilder = new MongoUrlBuilder(connectionString);
-    var hasConfiguredUsername = !string.IsNullOrWhiteSpace(settings.Username);
-    var hasConfiguredPassword = !string.IsNullOrWhiteSpace(settings.Password);
-
-    if (hasConfiguredUsername != hasConfiguredPassword)
-    {
-        throw new InvalidOperationException("MongoDb settings require both username and password when either is provided.");
-    }
-
-    if (hasConfiguredUsername && hasConfiguredPassword)
-    {
-        urlBuilder.Username = settings.Username;
-        urlBuilder.Password = settings.Password;
-    }
-
-    var hasCredentials = !string.IsNullOrWhiteSpace(urlBuilder.Username)
-        && !string.IsNullOrWhiteSpace(urlBuilder.Password);
-
-    if (hasCredentials && !string.IsNullOrWhiteSpace(settings.AuthDatabase))
-    {
-        urlBuilder.AuthenticationSource = settings.AuthDatabase;
-    }
-
-    if (hasCredentials && !string.IsNullOrWhiteSpace(settings.AuthMechanism))
-    {
-        urlBuilder.AuthenticationMechanism = settings.AuthMechanism;
-    }
-
-    return new MongoClient(urlBuilder.ToMongoUrl());
-});
-builder.Services.AddSingleton(sp =>
-{
-    var settings = sp.GetRequiredService<IOptions<MongoDbSettings>>().Value;
-    var client = sp.GetRequiredService<IMongoClient>();
-    return client.GetDatabase(settings.DatabaseName);
-});
+builder.Services.AddDbContext<WebAppDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped<DiaryService>();
 builder.Services.AddScoped<ActivityService>();
 builder.Services.AddScoped<FinanceEntryService>();
+builder.Services.AddScoped<DayPlanService>();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
     {
@@ -277,10 +229,85 @@ app.MapPost("/account/logout", async (
 
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var dataDir = Path.Combine(app.Environment.ContentRootPath, "Data");
     Directory.CreateDirectory(dataDir);
-    db.Database.EnsureCreated();
+
+    var identityDb = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    identityDb.Database.EnsureCreated();
+
+    var webDb = scope.ServiceProvider.GetRequiredService<WebAppDbContext>();
+    webDb.Database.EnsureCreated();
+    webDb.Database.ExecuteSqlRaw("""
+        CREATE TABLE IF NOT EXISTS "FinanceEntries" (
+            "Id" TEXT NOT NULL CONSTRAINT "PK_FinanceEntries" PRIMARY KEY,
+            "UserId" TEXT NOT NULL,
+            "Type" INTEGER NOT NULL,
+            "Title" TEXT NOT NULL,
+            "Amount" TEXT NOT NULL,
+            "Note" TEXT NULL,
+            "EntryDate" TEXT NOT NULL,
+            "CreatedAt" TEXT NOT NULL,
+            "UpdatedAt" TEXT NULL
+        );
+    """);
+    webDb.Database.ExecuteSqlRaw("""
+        CREATE TABLE IF NOT EXISTS "DiaryEntries" (
+            "Id" TEXT NOT NULL CONSTRAINT "PK_DiaryEntries" PRIMARY KEY,
+            "UserId" TEXT NOT NULL,
+            "Title" TEXT NOT NULL,
+            "Content" TEXT NOT NULL,
+            "EntryDate" TEXT NOT NULL,
+            "Tags" TEXT NOT NULL,
+            "Mood" INTEGER NOT NULL,
+            "CreatedAt" TEXT NOT NULL,
+            "UpdatedAt" TEXT NULL
+        );
+    """);
+    webDb.Database.ExecuteSqlRaw("""
+        CREATE TABLE IF NOT EXISTS "ActivityItems" (
+            "Id" TEXT NOT NULL CONSTRAINT "PK_ActivityItems" PRIMARY KEY,
+            "UserId" TEXT NOT NULL,
+            "Title" TEXT NOT NULL,
+            "Description" TEXT NULL,
+            "Category" TEXT NULL,
+            "StartDate" TEXT NULL,
+            "DueDate" TEXT NULL,
+            "Status" INTEGER NOT NULL,
+            "IsImportant" INTEGER NOT NULL,
+            "CreatedAt" TEXT NOT NULL,
+            "CompletedAt" TEXT NULL
+        );
+    """);
+    webDb.Database.ExecuteSqlRaw("""
+        CREATE TABLE IF NOT EXISTS "DayPlanItems" (
+            "Id" TEXT NOT NULL CONSTRAINT "PK_DayPlanItems" PRIMARY KEY,
+            "UserId" TEXT NOT NULL,
+            "PlanDate" TEXT NOT NULL,
+            "Title" TEXT NOT NULL,
+            "StartTime" TEXT NOT NULL,
+            "EndTime" TEXT NOT NULL,
+            "Notes" TEXT NULL,
+            "IsCompleted" INTEGER NOT NULL,
+            "CreatedAt" TEXT NOT NULL,
+            "UpdatedAt" TEXT NULL
+        );
+    """);
+    webDb.Database.ExecuteSqlRaw("""
+        CREATE INDEX IF NOT EXISTS "IX_FinanceEntries_UserId_EntryDate"
+        ON "FinanceEntries" ("UserId", "EntryDate");
+    """);
+    webDb.Database.ExecuteSqlRaw("""
+        CREATE INDEX IF NOT EXISTS "IX_DiaryEntries_UserId_EntryDate"
+        ON "DiaryEntries" ("UserId", "EntryDate");
+    """);
+    webDb.Database.ExecuteSqlRaw("""
+        CREATE INDEX IF NOT EXISTS "IX_ActivityItems_UserId_Status"
+        ON "ActivityItems" ("UserId", "Status");
+    """);
+    webDb.Database.ExecuteSqlRaw("""
+        CREATE INDEX IF NOT EXISTS "IX_DayPlanItems_UserId_PlanDate"
+        ON "DayPlanItems" ("UserId", "PlanDate");
+    """);
 }
 
 app.Run();

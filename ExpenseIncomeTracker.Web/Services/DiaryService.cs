@@ -1,55 +1,83 @@
+using ExpenseIncomeTracker.Web.Persistence;
 using ExpenseIncomeTracker.Web.Models;
-using MongoDB.Driver;
+using Microsoft.EntityFrameworkCore;
 
 namespace ExpenseIncomeTracker.Web.Services;
 
 public sealed class DiaryService
 {
-    private readonly IMongoCollection<DiaryEntry> _entries;
+    private readonly WebAppDbContext _db;
 
-    public DiaryService(IMongoDatabase database)
+    public DiaryService(WebAppDbContext db)
     {
-        _entries = database.GetCollection<DiaryEntry>("diary_entries");
+        _db = db;
     }
 
     public async Task<List<DiaryEntry>> GetAllAsync(string userId)
     {
-        var filter = Builders<DiaryEntry>.Filter.Eq(entry => entry.UserId, userId);
-        return await MongoAuthGuard.RunAsync(async () =>
-            await _entries.Find(filter)
-                .SortByDescending(entry => entry.EntryDate)
-                .ToListAsync());
+        return await _db.Set<DiaryEntry>()
+            .AsNoTracking()
+            .Where(entry => entry.UserId == userId)
+            .OrderByDescending(entry => entry.EntryDate)
+            .ThenByDescending(entry => entry.CreatedAt)
+            .ToListAsync();
     }
 
     public async Task<List<DiaryEntry>> GetRecentAsync(string userId, int limit)
     {
-        var filter = Builders<DiaryEntry>.Filter.Eq(entry => entry.UserId, userId);
-        return await MongoAuthGuard.RunAsync(async () =>
-            await _entries.Find(filter)
-                .SortByDescending(entry => entry.EntryDate)
-                .Limit(limit)
-                .ToListAsync());
+        return await _db.Set<DiaryEntry>()
+            .AsNoTracking()
+            .Where(entry => entry.UserId == userId)
+            .OrderByDescending(entry => entry.EntryDate)
+            .ThenByDescending(entry => entry.CreatedAt)
+            .Take(limit)
+            .ToListAsync();
     }
 
     public async Task CreateAsync(DiaryEntry entry)
     {
+        entry.Id ??= Guid.NewGuid().ToString("N");
         entry.CreatedAt = DateTime.UtcNow;
-        await MongoAuthGuard.RunAsync(async () => await _entries.InsertOneAsync(entry));
+        _db.Set<DiaryEntry>().Add(entry);
+        await _db.SaveChangesAsync();
     }
 
     public async Task UpdateAsync(DiaryEntry entry)
     {
+        if (string.IsNullOrWhiteSpace(entry.Id))
+        {
+            return;
+        }
+
+        var existing = await _db.Set<DiaryEntry>()
+            .FirstOrDefaultAsync(e => e.Id == entry.Id && e.UserId == entry.UserId);
+
+        if (existing is null)
+        {
+            return;
+        }
+
+        existing.Title = entry.Title;
+        existing.Content = entry.Content;
+        existing.EntryDate = entry.EntryDate;
+        existing.Tags = entry.Tags;
+        existing.Mood = entry.Mood;
+
         entry.UpdatedAt = DateTime.UtcNow;
-        var filter = Builders<DiaryEntry>.Filter.Eq(e => e.Id, entry.Id)
-            & Builders<DiaryEntry>.Filter.Eq(e => e.UserId, entry.UserId);
-        await MongoAuthGuard.RunAsync(async () =>
-            await _entries.ReplaceOneAsync(filter, entry, new ReplaceOptions { IsUpsert = false }));
+        existing.UpdatedAt = entry.UpdatedAt;
+        await _db.SaveChangesAsync();
     }
 
     public async Task DeleteAsync(string id, string userId)
     {
-        var filter = Builders<DiaryEntry>.Filter.Eq(entry => entry.Id, id)
-            & Builders<DiaryEntry>.Filter.Eq(entry => entry.UserId, userId);
-        await MongoAuthGuard.RunAsync(async () => await _entries.DeleteOneAsync(filter));
+        var existing = await _db.Set<DiaryEntry>()
+            .FirstOrDefaultAsync(entry => entry.Id == id && entry.UserId == userId);
+        if (existing is null)
+        {
+            return;
+        }
+
+        _db.Set<DiaryEntry>().Remove(existing);
+        await _db.SaveChangesAsync();
     }
 }

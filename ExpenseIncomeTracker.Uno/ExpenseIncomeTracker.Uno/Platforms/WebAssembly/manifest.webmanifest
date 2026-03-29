@@ -1,0 +1,10 @@
+{
+  "background_color": "#ffffff",
+  "description": "ExpenseIncomeTracker.Uno",
+  "display": "standalone",
+  "name": "ExpenseIncomeTracker.Uno",
+  "short_name": "ExpenseIncomeTracker.Uno",
+  "start_url": "/index.html",
+  "theme_color": "#ffffff",
+  "scope": "/"
+}

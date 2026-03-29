@@ -1,5 +1,4 @@
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
+using System.ComponentModel.DataAnnotations;
 
 namespace ExpenseIncomeTracker.Web.Models;
 
@@ -11,8 +10,7 @@ public enum FinanceEntryType
 
 public sealed class FinanceEntry
 {
-    [BsonId]
-    [BsonRepresentation(BsonType.ObjectId)]
+    [Key]
     public string? Id { get; set; }
 
     public string UserId { get; set; } = string.Empty;

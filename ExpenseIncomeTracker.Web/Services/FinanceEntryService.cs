@@ -1,58 +1,82 @@
+using ExpenseIncomeTracker.Web.Persistence;
 using ExpenseIncomeTracker.Web.Models;
-using MongoDB.Driver;
+using Microsoft.EntityFrameworkCore;
 
 namespace ExpenseIncomeTracker.Web.Services;
 
 public sealed class FinanceEntryService
 {
-    private readonly IMongoCollection<FinanceEntry> _entries;
+    private readonly WebAppDbContext _db;
 
-    public FinanceEntryService(IMongoDatabase database)
+    public FinanceEntryService(WebAppDbContext db)
     {
-        _entries = database.GetCollection<FinanceEntry>("finance_entries");
+        _db = db;
     }
 
     public async Task<List<FinanceEntry>> GetAllAsync(string userId)
     {
-        var filter = Builders<FinanceEntry>.Filter.Eq(entry => entry.UserId, userId);
-        return await MongoAuthGuard.RunAsync(async () =>
-            await _entries.Find(filter)
-                .SortByDescending(entry => entry.EntryDate)
-                .ToListAsync());
+        return await _db.Set<FinanceEntry>()
+            .AsNoTracking()
+            .Where(entry => entry.UserId == userId)
+            .OrderByDescending(entry => entry.EntryDate)
+            .ThenByDescending(entry => entry.CreatedAt)
+            .ToListAsync();
     }
 
     public async Task<List<FinanceEntry>> GetByTypeAsync(string userId, FinanceEntryType type)
     {
-        var filter = Builders<FinanceEntry>.Filter.Eq(entry => entry.UserId, userId)
-            & Builders<FinanceEntry>.Filter.Eq(entry => entry.Type, type);
-
-        return await MongoAuthGuard.RunAsync(async () =>
-            await _entries.Find(filter)
-                .SortByDescending(entry => entry.EntryDate)
-                .ToListAsync());
+        return await _db.Set<FinanceEntry>()
+            .AsNoTracking()
+            .Where(entry => entry.UserId == userId && entry.Type == type)
+            .OrderByDescending(entry => entry.EntryDate)
+            .ThenByDescending(entry => entry.CreatedAt)
+            .ToListAsync();
     }
 
     public async Task CreateAsync(FinanceEntry entry)
     {
+        entry.Id ??= Guid.NewGuid().ToString("N");
         entry.CreatedAt = DateTime.UtcNow;
-        await MongoAuthGuard.RunAsync(async () => await _entries.InsertOneAsync(entry));
+        _db.Set<FinanceEntry>().Add(entry);
+        await _db.SaveChangesAsync();
     }
 
     public async Task UpdateAsync(FinanceEntry entry)
     {
-        entry.UpdatedAt = DateTime.UtcNow;
-        var filter = Builders<FinanceEntry>.Filter.Eq(e => e.Id, entry.Id)
-            & Builders<FinanceEntry>.Filter.Eq(e => e.UserId, entry.UserId);
+        if (string.IsNullOrWhiteSpace(entry.Id))
+        {
+            return;
+        }
 
-        await MongoAuthGuard.RunAsync(async () =>
-            await _entries.ReplaceOneAsync(filter, entry, new ReplaceOptions { IsUpsert = false }));
+        var existing = await _db.Set<FinanceEntry>()
+            .FirstOrDefaultAsync(e => e.Id == entry.Id && e.UserId == entry.UserId);
+
+        if (existing is null)
+        {
+            return;
+        }
+
+        existing.Title = entry.Title;
+        existing.Type = entry.Type;
+        existing.Amount = entry.Amount;
+        existing.EntryDate = entry.EntryDate;
+        existing.Note = entry.Note;
+        entry.UpdatedAt = DateTime.UtcNow;
+        existing.UpdatedAt = entry.UpdatedAt;
+        await _db.SaveChangesAsync();
     }
 
     public async Task DeleteAsync(string id, string userId)
     {
-        var filter = Builders<FinanceEntry>.Filter.Eq(e => e.Id, id)
-            & Builders<FinanceEntry>.Filter.Eq(e => e.UserId, userId);
+        var existing = await _db.Set<FinanceEntry>()
+            .FirstOrDefaultAsync(e => e.Id == id && e.UserId == userId);
 
-        await MongoAuthGuard.RunAsync(async () => await _entries.DeleteOneAsync(filter));
+        if (existing is null)
+        {
+            return;
+        }
+
+        _db.Set<FinanceEntry>().Remove(existing);
+        await _db.SaveChangesAsync();
     }
 }
