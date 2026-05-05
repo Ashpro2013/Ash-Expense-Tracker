@@ -1,4 +1,4 @@
-<Page x:Class="ExpenseIncomeTracker.Uno.MainPage"
+﻿<Page x:Class="ExpenseIncomeTracker.Uno.MainPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -99,36 +99,40 @@
     </Page.Resources>
 
     <Grid Background="{StaticResource AppBackgroundBrush}">
-        <Grid x:Name="AuthRoot" Padding="24" MaxWidth="420" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <Grid Padding="24"
+              MaxWidth="420"
+              HorizontalAlignment="Center"
+              VerticalAlignment="Center"
+              Visibility="{Binding AuthRootVisibility}">
             <Border Background="{StaticResource PanelBrush}" BorderBrush="#C7D2FE" BorderThickness="1" CornerRadius="22" Padding="22">
                 <StackPanel Spacing="12">
                     <TextBlock Text="CashTrack Pro" FontSize="32" FontWeight="SemiBold" Foreground="{StaticResource TextMainBrush}" />
                     <TextBlock Text="Finance, diary, activities, and day planning in one place." Foreground="{StaticResource TextMutedBrush}" />
 
-                    <TextBlock x:Name="AuthModeText" Text="Sign In" FontSize="22" FontWeight="SemiBold" Margin="0,8,0,0" Foreground="{StaticResource TextMainBrush}" />
-                    <TextBox x:Name="AuthEmailBox"
-                             Header="Email"
+                    <TextBlock Text="{Binding AuthModeText}" FontSize="22" FontWeight="SemiBold" Margin="0,8,0,0" Foreground="{StaticResource TextMainBrush}" />
+                    <TextBox Header="Email"
                              PlaceholderText="you@example.com"
+                             Text="{Binding AuthEmail, Mode=TwoWay}"
                              Margin="0,2,0,0" />
                     <PasswordBox x:Name="AuthPasswordBox"
                                  Header="Password"
                                  PlaceholderText="Enter password"
+                                 PasswordChanged="OnAuthPasswordChanged"
                                  Margin="0,2,0,0" />
                     <PasswordBox x:Name="AuthConfirmPasswordBox"
                                  Header="Confirm Password"
                                  PlaceholderText="Re-enter password"
-                                 Visibility="Collapsed"
+                                 Visibility="{Binding AuthConfirmPasswordVisibility}"
+                                 PasswordChanged="OnAuthConfirmPasswordChanged"
                                  Margin="0,2,0,0" />
-                    <TextBlock x:Name="AuthErrorText" Foreground="#B91C1C" Visibility="Collapsed" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding AuthErrorText}" Foreground="#B91C1C" Visibility="{Binding AuthErrorVisibility}" TextWrapping="Wrap" />
 
-                    <Button x:Name="AuthSubmitButton"
-                            Content="Sign In"
-                            Click="AuthSubmitClicked"
+                    <Button Content="{Binding AuthSubmitButtonText}"
+                            Command="{Binding AuthSubmitCommand}"
                             Background="{StaticResource BrandTealBrush}"
                             Foreground="White" />
-                    <Button x:Name="AuthSwitchButton"
-                            Content="Create account"
-                            Click="AuthSwitchClicked"
+                    <Button Content="{Binding AuthSwitchButtonText}"
+                            Command="{Binding AuthSwitchCommand}"
                             Background="#F3F4F6"
                             Foreground="{StaticResource BrandTealBrush}"
                             BorderBrush="#CBD5E1"
@@ -137,7 +141,7 @@
             </Border>
         </Grid>
 
-        <Grid x:Name="AppRoot" Visibility="Collapsed">
+        <Grid Visibility="{Binding AppRootVisibility}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
@@ -146,17 +150,27 @@
             <Border Margin="14,12,14,6" Padding="16,12" Background="{StaticResource PanelBrush}" BorderBrush="#D1FAE5" BorderThickness="1" CornerRadius="16">
                 <Grid>
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <StackPanel>
+                    <Button Grid.Column="0"
+                            Content="☰"
+                            Command="{Binding ToggleSidebarCommand}"
+                            VerticalAlignment="Center"
+                            Background="Transparent"
+                            Foreground="{StaticResource BrandTealBrush}"
+                            BorderThickness="0"
+                            FontSize="20"
+                            Margin="0,0,12,0" />
+                    <StackPanel Grid.Column="1">
                         <TextBlock Text="CashTrack Pro" FontSize="28" FontWeight="SemiBold" Foreground="{StaticResource TextMainBrush}" />
                         <TextBlock Text="Smart personal finance and productivity companion" Foreground="{StaticResource TextMutedBrush}" />
-                        <TextBlock x:Name="WelcomeText" Foreground="{StaticResource BrandTealBrush}" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding WelcomeText}" Foreground="{StaticResource BrandTealBrush}" FontWeight="SemiBold" />
                     </StackPanel>
-                    <Button Grid.Column="1"
+                    <Button Grid.Column="2"
                             Content="Sign Out"
-                            Click="SignOutClicked"
+                            Command="{Binding SignOutCommand}"
                             VerticalAlignment="Center"
                             Background="#FFF1F2"
                             Foreground="#BE123C"
@@ -166,23 +180,23 @@
 
             <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="250" />
+                    <ColumnDefinition Width="{Binding SidebarColumnWidth}" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <nav:SideNavigationControl x:Name="SideNavigation" Grid.Column="0" />
+                <nav:SideNavigationControl Grid.Column="0" />
 
                 <ScrollViewer Grid.Column="1">
                     <StackPanel Spacing="16" Padding="18,14,18,20">
-                        <sections:DashboardView x:Name="DashboardSection" />
-                        <sections:IncomeView x:Name="IncomeSection" Visibility="Collapsed" />
-                        <sections:ExpenseView x:Name="ExpenseSection" Visibility="Collapsed" />
-                        <sections:ActivityView x:Name="ActivitySection" Visibility="Collapsed" />
-                        <sections:DiaryView x:Name="DiarySection" Visibility="Collapsed" />
-                        <sections:PlanView x:Name="PlanSection" Visibility="Collapsed" />
-                        <sections:AlbumView x:Name="AlbumSection" Visibility="Collapsed" />
-                        <sections:AddressBookView x:Name="AddressBookSection" Visibility="Collapsed" />
-                        <sections:PasswordDirectoryView x:Name="PasswordDirectorySection" Visibility="Collapsed" />
+                        <sections:DashboardView Visibility="{Binding DashboardSectionVisibility}" />
+                        <sections:IncomeView Visibility="{Binding IncomeSectionVisibility}" />
+                        <sections:ExpenseView Visibility="{Binding ExpenseSectionVisibility}" />
+                        <sections:ActivityView Visibility="{Binding ActivitySectionVisibility}" />
+                        <sections:DiaryView Visibility="{Binding DiarySectionVisibility}" />
+                        <sections:PlanView Visibility="{Binding PlanSectionVisibility}" />
+                        <sections:AlbumView Visibility="{Binding AlbumSectionVisibility}" />
+                        <sections:AddressBookView Visibility="{Binding AddressBookSectionVisibility}" />
+                        <sections:PasswordDirectoryView Visibility="{Binding PasswordDirectorySectionVisibility}" />
                     </StackPanel>
                 </ScrollViewer>
             </Grid>

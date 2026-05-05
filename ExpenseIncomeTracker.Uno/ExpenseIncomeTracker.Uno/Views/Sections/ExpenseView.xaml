@@ -1,8 +1,8 @@
 <UserControl x:Class="ExpenseIncomeTracker.Uno.Views.Sections.ExpenseView"
+             x:Name="Root"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:models="using:ExpenseIncomeTracker.Uno.Models"
              mc:Ignorable="d"
              RequestedTheme="Light">
     <Border Background="{StaticResource PanelBrush}" CornerRadius="18" Padding="18" BorderBrush="#FBCFE8" BorderThickness="1">
@@ -11,16 +11,16 @@
             <TextBlock Text="Track spending categories and keep notes." Foreground="{StaticResource TextMutedBrush}" />
             <Border Background="#FFFFFFFF" CornerRadius="12" Padding="12" BorderBrush="#FBCFE8" BorderThickness="1">
                 <StackPanel Spacing="10">
-                    <TextBox x:Name="ExpenseTitleBox" x:FieldModifier="public" Header="Title" />
-                    <TextBox x:Name="ExpenseAmountBox" x:FieldModifier="public" Header="Amount" />
-                    <TextBox x:Name="ExpenseNoteBox" x:FieldModifier="public" Header="Note" />
-                    <Button x:Name="ExpenseSaveButton" x:FieldModifier="public" Content="Add Expense" Click="OnAddExpenseClicked" />
+                    <TextBox Header="Title" Text="{Binding ExpenseTitle, Mode=TwoWay}" />
+                    <TextBox Header="Amount" Text="{Binding ExpenseAmount, Mode=TwoWay}" />
+                    <TextBox Header="Note" Text="{Binding ExpenseNote, Mode=TwoWay}" />
+                    <Button Content="{Binding ExpenseSaveButtonText}" Command="{Binding AddExpenseCommand}" />
                 </StackPanel>
             </Border>
             <Border Background="#F8FAFC" CornerRadius="12" Padding="8" BorderBrush="#FBCFE8" BorderThickness="1">
-                <ListView x:Name="ExpenseListView" x:FieldModifier="public" MaxHeight="420">
+                <ListView ItemsSource="{Binding ExpenseEntries}" MaxHeight="420">
                     <ListView.ItemTemplate>
-                        <DataTemplate x:DataType="models:FinanceEntry">
+                        <DataTemplate>
                             <Border Background="#FFFFFFFF" CornerRadius="10" BorderBrush="#E2E8F0" BorderThickness="1" Padding="10" Margin="0,0,0,8">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -28,13 +28,23 @@
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <StackPanel>
-                                        <TextBlock Text="{x:Bind Title}" FontWeight="SemiBold" />
-                                        <TextBlock Text="{x:Bind Note}" Foreground="{StaticResource TextMutedBrush}" />
+                                        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding Note}" Foreground="{StaticResource TextMutedBrush}" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                        <TextBlock Text="{x:Bind Amount}" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,6,0" />
-                                        <Button Content="Edit" Tag="{x:Bind Id}" Click="OnEditExpenseClicked" Background="#E0F2FE" Foreground="#075985" BorderBrush="#7DD3FC" />
-                                        <Button Content="Delete" Tag="{x:Bind Id}" Click="OnDeleteExpenseClicked" Background="#FEE2E2" Foreground="#B91C1C" BorderBrush="#FCA5A5" />
+                                        <TextBlock Text="{Binding Amount}" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,6,0" />
+                                        <Button Content="Edit"
+                                                Command="{Binding DataContext.EditExpenseCommand, ElementName=Root}"
+                                                CommandParameter="{Binding Id}"
+                                                Background="#E0F2FE"
+                                                Foreground="#075985"
+                                                BorderBrush="#7DD3FC" />
+                                        <Button Content="Delete"
+                                                Command="{Binding DataContext.DeleteExpenseCommand, ElementName=Root}"
+                                                CommandParameter="{Binding Id}"
+                                                Background="#FEE2E2"
+                                                Foreground="#B91C1C"
+                                                BorderBrush="#FCA5A5" />
                                     </StackPanel>
                                 </Grid>
                             </Border>

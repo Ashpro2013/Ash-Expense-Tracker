@@ -6,7 +6,7 @@
              RequestedTheme="Light">
     <Border Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" BorderBrush="#E2E8F0" BorderThickness="0,0,1,0">
         <NavigationView x:Name="RootNav"
-                        x:FieldModifier="public"
+                        SelectionChanged="OnSelectionChanged"
                         IsBackButtonVisible="Collapsed"
                         IsPaneToggleButtonVisible="False"
                         IsSettingsVisible="False"
