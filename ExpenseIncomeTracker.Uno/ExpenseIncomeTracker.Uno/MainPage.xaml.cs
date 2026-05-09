@@ -16,7 +16,7 @@ public sealed partial class MainPage : Page
     {
         InitializeComponent();
 
-        ViewModel = new MainViewModel(new AppStateService(new LocalStoreService()));
+        ViewModel = new MainViewModel(new AppStateService(new LocalStoreService()), new ActivationService());
         DataContext = ViewModel;
 
         Loaded += OnLoaded;

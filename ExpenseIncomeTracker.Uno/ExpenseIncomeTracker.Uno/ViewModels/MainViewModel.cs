@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ExpenseIncomeTracker.Uno.Interfaces;
 using ExpenseIncomeTracker.Uno.Models;
+using ExpenseIncomeTracker.Uno.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Windows.Storage;
@@ -16,6 +17,7 @@ public partial class MainViewModel : ObservableObject
     private const string AlbumFolderName = "album";
 
     private readonly IAppStateService _stateService;
+    private readonly IActivationService _activationService;
     private AppState _state = new();
     private string _currentUser = string.Empty;
 
@@ -27,9 +29,11 @@ public partial class MainViewModel : ObservableObject
     private string? _editingAddressBookId;
     private string? _editingPasswordDirectoryId;
 
-    public MainViewModel(IAppStateService stateService)
+    public MainViewModel(IAppStateService stateService, IActivationService activationService)
     {
         _stateService = stateService;
+        _activationService = activationService;
+        IsActivated = _activationService.IsActivated;
     }
 
     public ObservableCollection<FinanceEntry> IncomeEntries { get; } = new();
@@ -120,8 +124,15 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private string passwordNotes = string.Empty;
     [ObservableProperty] private string passwordSaveButtonText = "Add Password Entry";
 
-    public Visibility AuthRootVisibility => IsAuthenticated ? Visibility.Collapsed : Visibility.Visible;
-    public Visibility AppRootVisibility => IsAuthenticated ? Visibility.Visible : Visibility.Collapsed;
+    [ObservableProperty] private bool isActivated;
+    [ObservableProperty] private string activationEmail = string.Empty;
+    [ObservableProperty] private string activationLicenseKey = string.Empty;
+    [ObservableProperty] private string activationErrorText = string.Empty;
+    [ObservableProperty] private Visibility activationErrorVisibility = Visibility.Collapsed;
+
+    public Visibility ActivationRootVisibility => IsActivated ? Visibility.Collapsed : Visibility.Visible;
+    public Visibility AuthRootVisibility => (IsActivated && !IsAuthenticated) ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility AppRootVisibility => (IsActivated && IsAuthenticated) ? Visibility.Visible : Visibility.Collapsed;
 
     public string AuthModeText => RegisterMode ? "Create Account" : "Sign In";
     public string AuthSubmitButtonText => RegisterMode ? "Register" : "Sign In";
@@ -140,6 +151,13 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnIsAuthenticatedChanged(bool value)
     {
+        OnPropertyChanged(nameof(AuthRootVisibility));
+        OnPropertyChanged(nameof(AppRootVisibility));
+    }
+
+    partial void OnIsActivatedChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ActivationRootVisibility));
         OnPropertyChanged(nameof(AuthRootVisibility));
         OnPropertyChanged(nameof(AppRootVisibility));
     }
@@ -185,7 +203,14 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private async Task Initialize()
     {
+        IsActivated = _activationService.IsActivated;
         _state = await _stateService.LoadAsync();
+        
+        if (!IsActivated)
+        {
+            return;
+        }
+
         if (!string.IsNullOrWhiteSpace(_state.CurrentUserEmail))
         {
             _currentUser = _state.CurrentUserEmail;
@@ -195,6 +220,40 @@ public partial class MainViewModel : ObservableObject
         {
             ShowAuth();
         }
+    }
+
+    [RelayCommand]
+    private async Task Activate()
+    {
+        var email = (ActivationEmail ?? string.Empty).Trim();
+        var key = (ActivationLicenseKey ?? string.Empty).Trim();
+
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(key))
+        {
+            ShowActivationError("Email and License Key are required.");
+            return;
+        }
+
+        ActivationErrorText = "Activating...";
+        ActivationErrorVisibility = Visibility.Visible;
+
+        var result = await _activationService.ActivateAsync(email, key);
+        
+        if (result.Success)
+        {
+            IsActivated = true;
+            await Initialize();
+        }
+        else
+        {
+            ShowActivationError(result.Message ?? "Activation failed.");
+        }
+    }
+
+    private void ShowActivationError(string message)
+    {
+        ActivationErrorText = message;
+        ActivationErrorVisibility = string.IsNullOrWhiteSpace(message) ? Visibility.Collapsed : Visibility.Visible;
     }
 
     [RelayCommand]
