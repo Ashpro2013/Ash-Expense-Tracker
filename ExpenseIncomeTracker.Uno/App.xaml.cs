@@ -4,7 +4,7 @@ using Uno.Resizetizer;
 
 namespace ExpenseIncomeTracker.Uno;
 
-public partial class App : Application
+public partial class App : Microsoft.UI.Xaml.Application
 {
     private bool _mainWindowCloseHandlerAttached;
 
