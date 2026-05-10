@@ -5,13 +5,13 @@ using System.Threading.Tasks;
 using Windows.Security.ExchangeActiveSyncProvisioning;
 using Windows.Storage;
 using ExpenseIncomeTracker.Uno.Models;
-
 namespace ExpenseIncomeTracker.Uno.Services;
 
 public interface IActivationService
 {
     bool IsActivated { get; }
     Task<ActivationResult> ActivateAsync(string email, string licenseKey);
+    void SaveActivation(string? email = null, ActivationResponse? response = null);
 }
 
 public class ActivationService : IActivationService
@@ -35,13 +35,17 @@ public class ActivationService : IActivationService
             var deviceInfo = new EasClientDeviceInformation();
             var deviceId = deviceInfo.Id.ToString();
             var deviceName = deviceInfo.FriendlyName;
+            string productCode = "12"; // Windows default
 
+#if __ANDROID__
+productCode = "11";
+#endif
             var request = new ActivationRequest(
                 Email: email,
                 LicenseKey: licenseKey,
                 DeviceId: deviceId,
                 DeviceIdName: deviceName,
-                ProductCode: "EXPENSE_TRACKER_PRO" // Example product code
+                ProductCode: productCode // Example product code
             );
 
             var response = await _httpClient.PostAsJsonAsync(ApiUrl, request);
@@ -65,14 +69,27 @@ public class ActivationService : IActivationService
         }
     }
 
-    private void SaveActivation(string email, ActivationResponse response)
+    public void SaveActivation(string? email = null, ActivationResponse? response = null)
     {
-        var settings = ApplicationData.Current.LocalSettings.Values;
-        settings[ActivationKey] = true;
-        settings[LicenseEmailKey] = email;
-        settings[LicenseKeyKey] = response.licenseKey ?? string.Empty;
-        settings[DeviceIdKey] = response.DeviceId ?? string.Empty;
-        settings[LicenseTypeKey] = response.licenseType ?? string.Empty;
-        settings[ExpiryDateKey] = response.expiryDate ?? string.Empty;
+        if (email != null || response != null)
+        {
+            var settings = ApplicationData.Current.LocalSettings.Values;
+            settings[ActivationKey] = true;
+            settings[LicenseEmailKey] = email;
+            settings[LicenseKeyKey] = response.licenseKey ?? string.Empty;
+            settings[DeviceIdKey] = response.DeviceId ?? string.Empty;
+            settings[LicenseTypeKey] = response.licenseType ?? string.Empty;
+            settings[ExpiryDateKey] = response.expiryDate ?? string.Empty;
+        }
+        else
+        {
+            var settings = ApplicationData.Current.LocalSettings.Values;
+            settings[ActivationKey] = false;
+            settings.Remove(LicenseEmailKey);
+            settings.Remove(LicenseKeyKey);
+            settings.Remove(DeviceIdKey);
+            settings.Remove(LicenseTypeKey);
+            settings.Remove(ExpiryDateKey);
+        }
     }
 }
