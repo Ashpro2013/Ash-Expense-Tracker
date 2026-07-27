@@ -5,6 +5,10 @@ using System.Threading.Tasks;
 using Windows.Security.ExchangeActiveSyncProvisioning;
 using Windows.Storage;
 using ExpenseIncomeTracker.Uno.Models;
+using Microsoft.Win32;
+#if __ANDROID__
+using Android.Provider;
+#endif
 namespace ExpenseIncomeTracker.Uno.Services;
 
 public interface IActivationService
@@ -68,7 +72,21 @@ productCode = "11";
             return new ActivationResult(false, $"An error occurred: {ex.Message}");
         }
     }
+    public (string, string) GetDeviceIdAsync()
+    {
+#if __ANDROID__
+        return (Settings.Secure.GetString(
+            Android.App.Application.Context.ContentResolver,
+            Settings.Secure.AndroidId), "AndroidId");
 
+#else
+        using var key = Registry.LocalMachine.OpenSubKey(
+        @"SOFTWARE\Microsoft\Cryptography");
+
+    return (key?.GetValue("MachineGuid")?.ToString()
+           ?? Environment.MachineName,"MachineGuid");
+#endif
+    }
     public void SaveActivation(string? email = null, ActivationResponse? response = null)
     {
         if (email != null || response != null)
